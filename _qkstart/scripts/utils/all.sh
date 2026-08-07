@@ -1,0 +1,13 @@
+q i basic
+q i zsh
+q i kubectl
+q i fzf
+q i eksctl
+q i k9s
+q i helm
+q i docker
+q i aws_auto
+q i kubectx
+q v c
+q i alias
+q u autoc
