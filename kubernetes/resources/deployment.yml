@@ -74,8 +74,15 @@ spec:
         volumeMounts:
         - name: localtime
           mountPath: /etc/localtime
+        - name: cache
+          mountPath: /mnt/efs/unicorn-cache/
+          
       volumes:
         - name: localtime
           hostPath:
             path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: cache
+          persistentVolumeClaim:
+            claimName: efs-claim
+          
       restartPolicy: Always
