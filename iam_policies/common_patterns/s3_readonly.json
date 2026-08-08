@@ -5,7 +5,10 @@
       "Sid": "Statement1",
       "Effect": "Allow",
       "Action": [
-        "s3:GetObject"
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:AbortMultipartUpload",
+        "s3:DeleteObject"
       ],
       "Resource": [
         "arn:aws:s3:::{s3_bucket}/{prefix}/*"
@@ -13,6 +16,16 @@
     },
     {
       "Sid": "Statement2",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::{s3_bucket}/{prefix}"
+      ]
+    },
+    {
+      "Sid": "Statement3",
       "Effect": "Allow",
       "Action": [
         "kms:Decrypt"

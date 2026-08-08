@@ -6,3 +6,9 @@ eksctl utils associate-iam-oidc-provider --cluster unicorn --region us-east-1 --
 
 # describe cluster
 aws eks describe-cluster --name YOUR_CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text
+
+# EKS managed node group
+aws eks update-nodegroup-config \
+  --cluster-name unicorn \
+  --nodegroup-name app-ng \
+  --scaling-config minSize=3,maxSize=5,desiredSize=3
