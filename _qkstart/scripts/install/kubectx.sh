@@ -20,4 +20,3 @@ cat << EOF >> ~/.bashrc
 export PATH=~/.kubectx:\$PATH
 EOF
 
-source ~/.bashrc

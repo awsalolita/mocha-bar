@@ -8,4 +8,3 @@ autoload -Uz compinit && compinit
 complete -C '$COMPLETER_PATH' aws
 EOF
 
-source ~/.bashrc

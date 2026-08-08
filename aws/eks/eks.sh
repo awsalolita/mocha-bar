@@ -12,3 +12,6 @@ aws eks update-nodegroup-config \
   --cluster-name unicorn \
   --nodegroup-name app-ng \
   --scaling-config minSize=3,maxSize=5,desiredSize=3
+
+# increase the max pods
+kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true

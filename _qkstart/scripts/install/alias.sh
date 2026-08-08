@@ -13,5 +13,3 @@ alias to="terraform output"
 alias qi="q i"
 EOF
 
-source ~/.bashrc
-

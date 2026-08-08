@@ -8,4 +8,3 @@ export PATH="$HOME/.fzf/bin:$PATH"
 eval "$(fzf --bash)"
 EOF
 
-source ~/.bashrc
