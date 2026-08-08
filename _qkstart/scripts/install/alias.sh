@@ -1,4 +1,5 @@
 cat <<EOF >> ~/.bashrc
+alias k="kubectl"
 alias ka="kubectl apply -f"
 alias kd="kubectl describe -f"
 alias kx="kubectl delete -f"
