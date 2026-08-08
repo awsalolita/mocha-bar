@@ -1,5 +1,5 @@
 # get config for a cluster in region 
-aws eks update-kubeconfig --region us-east-1 --name unicorn-cluster
+aws eks update-kubeconfig --region us-east-1 --name unicorn
 
 # enable OIDC provider
 eksctl utils associate-iam-oidc-provider \

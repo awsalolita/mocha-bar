@@ -12,3 +12,6 @@ alias taa="terraform apply --auto-approve --parallelism 100"
 alias to="terraform output"
 alias qi="q i"
 EOF
+
+source ~/.bashrc
+

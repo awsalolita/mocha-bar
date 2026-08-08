@@ -19,3 +19,5 @@ cat << EOF >> ~/.bashrc
 #kubectx and kubens
 export PATH=~/.kubectx:\$PATH
 EOF
+
+source ~/.bashrc

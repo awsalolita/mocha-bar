@@ -23,3 +23,5 @@ cat <<EOF >> ~/.zshsrc
 autoload -U compinit
 compinit
 EOF
+
+source ~/.bashrc
