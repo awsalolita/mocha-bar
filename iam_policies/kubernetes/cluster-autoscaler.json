@@ -27,7 +27,7 @@
             "Condition": {
                 "StringEquals": {
                     "aws:ResourceTag/k8s.io/cluster-autoscaler/enabled": "true",
-                    "aws:ResourceTag/k8s.io/cluster-autoscaler/<CLUSTER_NAME>": "owned"
+                    "aws:ResourceTag/k8s.io/cluster-autoscaler/unicorn": "owned"
                 }
             }
         }

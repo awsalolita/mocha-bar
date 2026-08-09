@@ -1,5 +1,6 @@
 ########### Install EFS csi controller on eks ###########
-### Before this create efs and efs-sg which allows inbound from eks node's sg ###
+####### Before this create efs and efs-sg which allows inbound from eks node's sg #######
+#########################################################################################
 eksctl create iamserviceaccount \
   --name efs-csi-controller-sa \
   --namespace kube-system \
