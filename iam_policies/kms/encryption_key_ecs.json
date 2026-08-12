@@ -1,0 +1,47 @@
+[{
+    "Sid": "Allow generate data key access for Fargate tasks.",
+    "Effect": "Allow",
+    "Principal": {
+        "Service": "fargate.amazonaws.com"
+    },
+    "Action": [
+        "kms:GenerateDataKeyWithoutPlaintext"
+    ],
+    "Condition": {
+        "StringEquals": {
+            "kms:EncryptionContext:aws:ecs:clusterAccount": [
+                "252973392328"
+            ],
+            "kms:EncryptionContext:aws:ecs:clusterName": [
+                "green-cluster"
+            ]
+        }
+    },
+    "Resource": "*"
+},
+{
+    "Sid": "Allow grant creation permission for Fargate tasks.",
+    "Effect": "Allow",
+    "Principal": {
+        "Service": "fargate.amazonaws.com"
+    },
+    "Action": [
+        "kms:CreateGrant"
+    ],
+    "Condition": {
+        "StringEquals": {
+            "kms:EncryptionContext:aws:ecs:clusterAccount": [
+                "252973392328"
+            ],
+            "kms:EncryptionContext:aws:ecs:clusterName": [
+                "green-cluster"
+            ]
+        },
+        "ForAllValues:StringEquals": {
+            "kms:GrantOperations": [
+                "Decrypt"
+            ]
+        }
+    },
+    "Resource": "*"
+}]
