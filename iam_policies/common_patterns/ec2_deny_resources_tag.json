@@ -1,0 +1,20 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "Statement1",
+			"Effect": "Deny",
+			"Action": [
+				"ec2:StopInstances"
+			],
+			"Resource": [
+				"arn:aws:ec2:us-east-1:252973392328:instance/*"
+			],
+			"Condition": {
+				"StringEqualsIgnoreCase": {
+					"ec2:ResourceTag/Department": "Marketing"
+				}
+			}
+		}
+	]
+}
