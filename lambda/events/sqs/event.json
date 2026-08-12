@@ -1,0 +1,25 @@
+{
+  "Records": [
+    {
+      "messageId": "059f36b4-87a3-44ab-83d2-661975830a7d",
+      "receiptHandle": "AQEBwJnKyrHigUMZj6rYigCgxlaS3SLy0a...",
+      "body": "{\"orderId\":\"1234\",\"item\":\"espresso\",\"qty\":2}",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1786338000000",
+        "SenderId": "AIDAEXAMPLE",
+        "ApproximateFirstReceiveTimestamp": "1786338000100"
+      },
+      "messageAttributes": {
+        "source": {
+          "stringValue": "checkout-service",
+          "dataType": "String"
+        }
+      },
+      "md5OfBody": "7b270e59b47ff90a553787216d55d91d",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:us-east-1:123456789012:mocha-bar-orders",
+      "awsRegion": "us-east-1"
+    }
+  ]
+}

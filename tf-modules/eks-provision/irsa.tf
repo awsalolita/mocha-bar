@@ -1,8 +1,11 @@
 module "irsa_cloudwatchagent" {
-  source    = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  role_name = "${var.project_name}-role-cloudwatchagent"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version = "~> 6.0"
 
-  role_policy_arns = {
+  name            = "${var.project_name}-role-cloudwatchagent"
+  use_name_prefix = false
+
+  policies = {
     policy = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
   }
 
@@ -17,10 +20,13 @@ module "irsa_cloudwatchagent" {
 }
 
 module "irsa_argocd_updater" {
-  source    = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  role_name = "${var.project_name}-role-argocd-updater"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version = "~> 6.0"
 
-  role_policy_arns = {
+  name            = "${var.project_name}-role-argocd-updater"
+  use_name_prefix = false
+
+  policies = {
     policy = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   }
 
@@ -35,10 +41,13 @@ module "irsa_argocd_updater" {
 }
 
 module "irsa_dynamodb" {
-  source    = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  role_name = "${var.project_name}-role-dynamodb"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version = "~> 6.0"
 
-  role_policy_arns = {
+  name            = "${var.project_name}-role-dynamodb"
+  use_name_prefix = false
+
+  policies = {
     policy = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
   }
 
@@ -53,10 +62,13 @@ module "irsa_dynamodb" {
 }
 
 module "irsa_secretsmanager" {
-  source    = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  role_name = "${var.project_name}-role-secretsmanager"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version = "~> 6.0"
 
-  role_policy_arns = {
+  name            = "${var.project_name}-role-secretsmanager"
+  use_name_prefix = false
+
+  policies = {
     policy = "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
   }
 
@@ -72,7 +84,7 @@ module "irsa_secretsmanager" {
 
 # resource "aws_iam_policy" "secretsmanager" {
 #   name = "${var.project_name}-policy-secretsmanager"
-#   policy = data.aws_iam_policy_document.secretsmanager.json  
+#   policy = data.aws_iam_policy_document.secretsmanager.json
 # }
 
 # data "aws_iam_policy_document" "secretsmanager" {
@@ -86,13 +98,16 @@ module "irsa_secretsmanager" {
 # }
 
 # module "irsa_secretsmanager" {
-#   source    = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-#   role_name = "${var.project_name}-role-secretsmanager"
-
-#   role_policy_arns = {
+#   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+#   version = "~> 6.0"
+#
+#   name            = "${var.project_name}-role-secretsmanager"
+#   use_name_prefix = false
+#
+#   policies = {
 #     policy = aws_iam_policy.secretsmanager.arn
 #   }
-
+#
 #   oidc_providers = {
 #     cluster-oidc-provider = {
 #       provider_arn               = module.eks.oidc_provider_arn
@@ -105,7 +120,7 @@ module "irsa_secretsmanager" {
 
 # resource "aws_iam_policy" "fluentd" {
 #   name = "project-policy-fluentd"
-#   policy = data.aws_iam_policy_document.fluentd.json  
+#   policy = data.aws_iam_policy_document.fluentd.json
 # }
 
 # data "aws_iam_policy_document" "fluentd" {
@@ -124,13 +139,16 @@ module "irsa_secretsmanager" {
 # }
 
 # module "irsa" {
-#   source    = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-#   role_name = "${var.project_name}-role-fluentd"
-
-#   role_policy_arns = {
+#   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+#   version = "~> 6.0"
+#
+#   name            = "${var.project_name}-role-fluentd"
+#   use_name_prefix = false
+#
+#   policies = {
 #     policy = aws_iam_policy.fluentd.arn
 #   }
-
+#
 #   oidc_providers = {
 #     cluster-oidc-provider = {
 #       provider_arn               = module.eks.oidc_provider_arn
@@ -143,14 +161,14 @@ module "irsa_secretsmanager" {
 
 # resource "aws_iam_policy" "prometheus" {
 #   name = "project-policy-prometheus"
-#   policy = data.aws_iam_policy_document.prometheus.json  
+#   policy = data.aws_iam_policy_document.prometheus.json
 # }
 
 # data "aws_iam_policy_document" "prometheus" {
 #   statement {
 #     actions = [
-#       "aps:RemoteWrite", 
-#       "aps:GetSeries", 
+#       "aps:RemoteWrite",
+#       "aps:GetSeries",
 #       "aps:GetLabels",
 #       "aps:GetMetricMetadata"
 #     ]
@@ -160,13 +178,16 @@ module "irsa_secretsmanager" {
 # }
 
 # module "irsa2" {
-#   source    = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-#   role_name = "${var.project_name}-role-prometheus"
-
-#   role_policy_arns = {
+#   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+#   version = "~> 6.0"
+#
+#   name            = "${var.project_name}-role-prometheus"
+#   use_name_prefix = false
+#
+#   policies = {
 #     policy = aws_iam_policy.prometheus.arn
 #   }
-
+#
 #   oidc_providers = {
 #     cluster-oidc-provider = {
 #       provider_arn               = module.eks.oidc_provider_arn

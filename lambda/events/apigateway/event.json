@@ -1,0 +1,41 @@
+{
+  "resource": "/orders/{orderId}",
+  "path": "/orders/1234",
+  "httpMethod": "POST",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer eyJhbGciOi...",
+    "Host": "api.mocha-bar.example.com",
+    "User-Agent": "curl/8.4.0"
+  },
+  "multiValueHeaders": {
+    "Content-Type": ["application/json"]
+  },
+  "queryStringParameters": {
+    "notify": "true"
+  },
+  "multiValueQueryStringParameters": {
+    "notify": ["true"]
+  },
+  "pathParameters": {
+    "orderId": "1234"
+  },
+  "stageVariables": {
+    "stage": "prod"
+  },
+  "requestContext": {
+    "resourceId": "abc123",
+    "resourcePath": "/orders/{orderId}",
+    "httpMethod": "POST",
+    "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
+    "accountId": "123456789012",
+    "stage": "prod",
+    "identity": {
+      "sourceIp": "203.0.113.10",
+      "userAgent": "curl/8.4.0"
+    },
+    "apiId": "1234567890"
+  },
+  "body": "{\"item\":\"espresso\",\"qty\":2}",
+  "isBase64Encoded": false
+}

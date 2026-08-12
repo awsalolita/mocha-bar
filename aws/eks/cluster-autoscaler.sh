@@ -1,4 +1,4 @@
-CLUSTER=unicorn
+CLUSTER=unicorn-cluster
 ASG=eks-app-ng-42cff051-521e-402e-0f6f-b654ef7c6fa6
 
 aws autoscaling create-or-update-tags --tags \
@@ -44,10 +44,10 @@ cat << EOF > cluster_autoscaler_policy.json
 EOF
 
 eksctl create iamserviceaccount \
-  --cluster=unicorn \
+  --cluster=${CLUSTER} \
   --namespace=kube-system \
   --name=cluster-autoscaler \
-  --attach-policy-arn=arn:aws:iam::654654239448:policy/cluster_autoscaler_policy \
+  --attach-policy-arn=arn:aws:iam::353615901360:policy/cluster-autoscaler-9f62bae2173af9928fe85f9701 \
   --override-existing-serviceaccounts \
   --approve \
   --region=us-east-1
@@ -58,7 +58,7 @@ helm upgrade --install cluster-autoscaler autoscaler/cluster-autoscaler \
   --namespace kube-system \
   --set cloudProvider=aws \
   --set awsRegion=us-east-1 \
-  --set autoDiscovery.clusterName=unicorn \
+  --set autoDiscovery.clusterName=${CLUSTER} \
   --set rbac.serviceAccount.create=false \
   --set rbac.serviceAccount.name=cluster-autoscaler \
   --set extraArgs.balance-similar-node-groups=true \

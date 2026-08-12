@@ -19,7 +19,13 @@ from sqlalchemy.orm import (
     relationship,
     Session,
 )
+from sqlalchemy.ext.automap import automap_base
 
+### for loading data from existing database 
+Base = automap_base()
+Users = Base.classes.Users
+Trips = Base.classes.Trips
+LocationLogs = Base.classes.LocationLogs
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)

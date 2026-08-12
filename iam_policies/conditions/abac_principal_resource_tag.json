@@ -1,0 +1,36 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowManageInstancesInSameTeam",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:StartInstances",
+        "ec2:StopInstances",
+        "ec2:RebootInstances"
+      ],
+      "Resource": "arn:aws:ec2:{Region}:{Account}:instance/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Team": "${aws:PrincipalTag/Team}"
+        }
+      }
+    },
+    {
+      "Sid": "RequireTeamTagOnCreate",
+      "Effect": "Allow",
+      "Action": "ec2:CreateTags",
+      "Resource": "arn:aws:ec2:{Region}:{Account}:instance/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/Team": "${aws:PrincipalTag/Team}"
+        },
+        "ForAllValues:StringEquals": {
+          "aws:TagKeys": [
+            "Team"
+          ]
+        }
+      }
+    }
+  ]
+}

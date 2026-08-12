@@ -1,0 +1,27 @@
+{
+  "Records": [
+    {
+      "EventSource": "aws:sns",
+      "EventVersion": "1.0",
+      "EventSubscriptionArn": "arn:aws:sns:us-east-1:123456789012:mocha-bar-alerts:1234abcd-5678",
+      "Sns": {
+        "Type": "Notification",
+        "MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e",
+        "TopicArn": "arn:aws:sns:us-east-1:123456789012:mocha-bar-alerts",
+        "Subject": "Order shipped",
+        "Message": "{\"orderId\":\"1234\",\"status\":\"SHIPPED\"}",
+        "Timestamp": "2026-08-10T05:20:00.000Z",
+        "SignatureVersion": "1",
+        "Signature": "EXAMPLEsignature==",
+        "SigningCertUrl": "https://sns.us-east-1.amazonaws.com/SimpleNotificationService-example.pem",
+        "UnsubscribeUrl": "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:123456789012:mocha-bar-alerts:1234abcd-5678",
+        "MessageAttributes": {
+          "priority": {
+            "Type": "String",
+            "Value": "high"
+          }
+        }
+      }
+    }
+  ]
+}

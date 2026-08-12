@@ -1,0 +1,8 @@
+{
+  "source": ["aws.ssm"],
+  "detail-type": ["Parameter Store Change"],
+  "detail": {
+    "name": [{ "prefix": "/mocha-bar/" }],
+    "operation": ["Create", "Update", "Delete"]
+  }
+}

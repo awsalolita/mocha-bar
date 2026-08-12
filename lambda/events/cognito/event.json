@@ -1,0 +1,26 @@
+{
+  "version": "1",
+  "region": "us-east-1",
+  "userPoolId": "us-east-1_ExamplePool",
+  "userName": "jane.doe",
+  "callerContext": {
+    "awsSdkVersion": "aws-sdk-js-3.x",
+    "clientId": "1example23clientid"
+  },
+  "triggerSource": "PreSignUp_SignUp",
+  "request": {
+    "userAttributes": {
+      "email": "jane.doe@example.com",
+      "phone_number": "+15551234567"
+    },
+    "validationData": null,
+    "clientMetadata": {
+      "referral": "newsletter"
+    }
+  },
+  "response": {
+    "autoConfirmUser": false,
+    "autoVerifyEmail": false,
+    "autoVerifyPhone": false
+  }
+}

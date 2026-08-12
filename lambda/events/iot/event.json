@@ -1,0 +1,10 @@
+{
+  "deviceId": "grinder-07",
+  "temperature": 92.4,
+  "pressure": 9.1,
+  "shotCount": 128,
+  "status": "OK",
+  "topic": "devices/grinder-07/telemetry",
+  "timestamp": 1786338000123,
+  "clientId": "grinder-07"
+}

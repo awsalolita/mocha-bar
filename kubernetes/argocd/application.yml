@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grow-ap
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://cetic.github.io/helm-charts
+    chart: microservice
+    targetRevision: 0.6.0                                  
+    helm:
+      valuesObject: 
+      # FROM HERE
+        global:
+          replicaCount: 2
+        image:
+          repository: "471208936033.dkr.ecr.ap-northeast-2.amazonaws.com/grow"
+          tag: "v1"
+          pullPolicy: IfNotPresent
+        volumes:
+          enabled: false
+
+  destination:
+    name: app-ap        
+    namespace: green-tree
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true]
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grow-eu
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://cetic.github.io/helm-charts
+    chart: microservice
+    targetRevision: 0.6.0                                  
+    helm:
+      valuesObject: 
+      # FROM HERE
+        global:
+          replicaCount: 2
+        image:
+          repository: "471208936033.dkr.ecr.eu-west-1.amazonaws.com/grow"
+          tag: "v1"
+          pullPolicy: IfNotPresent
+        volumes:
+          enabled: false
+
+  destination:
+    name: app-eu       
+    namespace: green-tree
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true]

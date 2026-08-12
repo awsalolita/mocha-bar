@@ -1,8 +1,8 @@
 module "eks" {
   source = "terraform-aws-modules/eks/aws"
 
-  cluster_name    = "${var.project_name}-cluster"
-  cluster_version = "1.32"
+  name   = "${var.project_name}-cluster"
+  kubernetes_version = "1.36"
 
   vpc_id                   = aws_vpc.this.id
   subnet_ids               = [for item in local.eks_node_subnets : aws_subnet.this[item.key].id]
@@ -22,34 +22,48 @@ module "eks" {
   }
 
   eks_managed_node_groups = {
-    tools = {
+    apps = {
       # BOTTLEROCKET_ARM_64
       # BOTTLEROCKET_x86_64
       # AL2023_ARM_64_STANDARD
       # AL2023_X86_64_STANDARD
       # AL2_ARM_64
 
-      name            = "${var.project_name}-nodegroup-tools"
-      ami_type        = "BOTTLEROCKET_ARM_64"
-      instance_types  = ["c6g.large"]
-      iam_role_name   = "${var.project_name}-ng-tools"
+      name            = "${var.project_name}-nodegroup-apps"
+      ami_type        = "AL2023_x86_64_STANDARD"
+      instance_types  = ["t3.medium"]
+      iam_role_name   = "${var.project_name}-ng-apps"
       use_name_prefix = false
 
       min_size     = 2
       max_size     = 27
       desired_size = 2
 
+      cloudinit_pre_nodeadm = [
+        {
+          content_type = "application/node.eks.aws"
+          content      = <<-EOT
+            apiVersion: node.eks.aws/v1alpha1
+            kind: NodeConfig
+            spec:
+              kubelet:
+                config:
+                  maxPods: 110
+          EOT
+        }
+      ]
+
       node_repair_config = {
         enabled = true
       }
 
       launch_template_tags = {
-        Name  = "${var.project_name}-node-tools"
-        owner = "pmh_only"
+        Name  = "${var.project_name}-node-apps"
+        owner = "mocha"
       }
 
       labels = {
-        dedicated = "tools"
+        dedicated = "apps"
       }
 
       metadata_options = {
@@ -60,7 +74,7 @@ module "eks" {
     }
   }
 
-  cluster_security_group_additional_rules = {
+  security_group_additional_rules = {
     vpc = {
       protocol    = "tcp"
       from_port   = "443"
@@ -82,18 +96,18 @@ module "eks" {
   }
 
   access_entries = {
-    bastion = {
-      principal_arn = aws_iam_role.bastion.arn
+    # bastion = {
+    #   principal_arn = aws_iam_role.bastion.arn
 
-      policy_associations = {
-        caller_policy = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
+    #   policy_associations = {
+    #     caller_policy = {
+    #       policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+    #       access_scope = {
+    #         type = "cluster"
+    #       }
+    #     }
+    #   }
+    # }
     caller = {
       principal_arn = data.aws_caller_identity.caller.arn
 
@@ -108,7 +122,7 @@ module "eks" {
     }
   }
 
-  cluster_enabled_log_types = [
+  enabled_log_types = [
     "api",
     "audit",
     "authenticator",
@@ -116,7 +130,7 @@ module "eks" {
     "scheduler"
   ]
 
-  cluster_zonal_shift_config = {
+  zonal_shift_config = {
     enabled = true
   }
 }

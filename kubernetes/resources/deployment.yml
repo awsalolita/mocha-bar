@@ -19,6 +19,7 @@ spec:
       labels:
         app:  <APP>
     spec:
+      serviceAccountName: <SA NAME>
       containers:
       - name:  <APP>
         image:  <IMAGE>

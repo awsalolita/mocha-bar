@@ -1,0 +1,9 @@
+{
+  "source": ["aws.tag"],
+  "detail-type": ["Tag Change on Resource"],
+  "detail": {
+    "service": ["ec2"],
+    "resource-type": ["instance"],
+    "changed-tag-keys": ["Environment", "CostCenter"]
+  }
+}

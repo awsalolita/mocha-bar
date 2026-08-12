@@ -1,0 +1,36 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenySensitiveActionsWithoutMFA",
+      "Effect": "Deny",
+      "Action": [
+        "iam:DeleteUser",
+        "iam:DeleteRole",
+        "iam:PutUserPolicy",
+        "iam:PutRolePolicy",
+        "kms:ScheduleKeyDeletion",
+        "kms:DisableKey",
+        "s3:DeleteBucket",
+        "ec2:TerminateInstances"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "BoolIfExists": {
+          "aws:MultiFactorAuthPresent": "false"
+        }
+      }
+    },
+    {
+      "Sid": "DenyIfMfaOlderThanOneHour",
+      "Effect": "Deny",
+      "Action": "*",
+      "Resource": "*",
+      "Condition": {
+        "NumericGreaterThanIfExists": {
+          "aws:MultiFactorAuthAge": "3600"
+        }
+      }
+    }
+  ]
+}

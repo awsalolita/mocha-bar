@@ -1,0 +1,56 @@
+{
+  "Records": [
+    {
+      "eventID": "1",
+      "eventName": "INSERT",
+      "eventVersion": "1.1",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "us-east-1",
+      "dynamodb": {
+        "ApproximateCreationDateTime": 1786338000,
+        "Keys": {
+          "orderId": { "S": "1234" }
+        },
+        "NewImage": {
+          "orderId": { "S": "1234" },
+          "item": { "S": "espresso" },
+          "qty": { "N": "2" },
+          "status": { "S": "NEW" }
+        },
+        "SequenceNumber": "111",
+        "SizeBytes": 64,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:123456789012:table/mocha-bar-orders/stream/2026-08-10T00:00:00.000"
+    },
+    {
+      "eventID": "2",
+      "eventName": "MODIFY",
+      "eventVersion": "1.1",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "us-east-1",
+      "dynamodb": {
+        "ApproximateCreationDateTime": 1786338060,
+        "Keys": {
+          "orderId": { "S": "1234" }
+        },
+        "NewImage": {
+          "orderId": { "S": "1234" },
+          "item": { "S": "espresso" },
+          "qty": { "N": "2" },
+          "status": { "S": "SHIPPED" }
+        },
+        "OldImage": {
+          "orderId": { "S": "1234" },
+          "item": { "S": "espresso" },
+          "qty": { "N": "2" },
+          "status": { "S": "NEW" }
+        },
+        "SequenceNumber": "222",
+        "SizeBytes": 96,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:123456789012:table/mocha-bar-orders/stream/2026-08-10T00:00:00.000"
+    }
+  ]
+}

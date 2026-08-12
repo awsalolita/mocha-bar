@@ -1,0 +1,8 @@
+{
+  "source": ["aws.codebuild"],
+  "detail-type": ["CodeBuild Build State Change"],
+  "detail": {
+    "build-status": ["IN_PROGRESS", "SUCCEEDED", "FAILED", "STOPPED"],
+    "project-name": ["mocha-bar-build"]
+  }
+}

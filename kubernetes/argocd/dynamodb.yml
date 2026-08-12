@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ack-dynamodb-controller-ap
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: public.ecr.aws/aws-controllers-k8s  
+    chart: dynamodb-chart
+    targetRevision: 1.9.2                           
+    helm:
+      parameters:
+        - name: aws.region
+          value: ap-northeast-2
+  destination:
+    server: https://E32E00E68194F27B4B92666C0F4CD102.yl4.ap-northeast-2.eks.amazonaws.com 
+    namespace: ack-system
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true]

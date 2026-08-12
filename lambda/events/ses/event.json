@@ -1,0 +1,42 @@
+{
+  "Records": [
+    {
+      "eventSource": "aws:ses",
+      "eventVersion": "1.0",
+      "ses": {
+        "mail": {
+          "timestamp": "2026-08-10T05:20:00.000Z",
+          "source": "customer@example.com",
+          "messageId": "o3vrnil0e2ic28tr",
+          "destination": ["orders@mocha-bar.example.com"],
+          "headersTruncated": false,
+          "headers": [
+            { "name": "From", "value": "customer@example.com" },
+            { "name": "To", "value": "orders@mocha-bar.example.com" },
+            { "name": "Subject", "value": "New order request" }
+          ],
+          "commonHeaders": {
+            "from": ["customer@example.com"],
+            "to": ["orders@mocha-bar.example.com"],
+            "subject": "New order request"
+          }
+        },
+        "receipt": {
+          "timestamp": "2026-08-10T05:20:00.000Z",
+          "processingTimeMillis": 574,
+          "recipients": ["orders@mocha-bar.example.com"],
+          "spamVerdict": { "status": "PASS" },
+          "virusVerdict": { "status": "PASS" },
+          "spfVerdict": { "status": "PASS" },
+          "dkimVerdict": { "status": "PASS" },
+          "dmarcVerdict": { "status": "PASS" },
+          "action": {
+            "type": "Lambda",
+            "functionArn": "arn:aws:lambda:us-east-1:123456789012:function:mocha-bar-ses",
+            "invocationType": "Event"
+          }
+        }
+      }
+    }
+  ]
+}

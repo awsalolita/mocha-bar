@@ -15,6 +15,9 @@ module "eks_blueprints_addons" {
   observability_tag = null
 
   eks_addons = {
+    eks-pod-identity-agent = {
+      most_recent = true
+    }
     coredns = {
       most_recent = true
       configuration_values = jsonencode({
@@ -28,8 +31,8 @@ module "eks_blueprints_addons" {
           # ENABLE_POD_ENI                    = "true"
           POD_SECURITY_GROUP_ENFORCING_MODE = "standard"
           NETWORK_POLICY_ENFORCING_MODE     = "standard"
-          # ENABLE_PREFIX_DELEGATION          = "true"
-          # WARM_PREFIX_TARGET                = "1"
+          ENABLE_PREFIX_DELEGATION          = "true"
+          WARM_PREFIX_TARGET                = "1"
         }
         enableNetworkPolicy = "true"
       })
@@ -39,7 +42,7 @@ module "eks_blueprints_addons" {
     }
     amazon-cloudwatch-observability = {
       most_recent              = true
-      service_account_role_arn = module.irsa_cloudwatchagent.iam_role_arn
+      service_account_role_arn = module.irsa_cloudwatchagent.arn
       configuration_values = jsonencode({
         containerLogs = { enabled = false }
       })
@@ -52,7 +55,7 @@ module "eks_blueprints_addons" {
   enable_karpenter                    = false
   enable_metrics_server               = true
   enable_cluster_autoscaler           = true
-  enable_aws_load_balancer_controller = false # <- eks auto
+  enable_aws_load_balancer_controller = true # <- eks auto
   enable_external_secrets             = false
   enable_aws_for_fluentbit            = true
   enable_fargate_fluentbit            = false
@@ -141,7 +144,7 @@ module "eks_blueprints_addons" {
 
     set = [{
       name  = "image.tag"
-      value = "v1.32.1"
+      value = "v1.35.0"
     }]
   }
 
@@ -206,7 +209,7 @@ resource "kubectl_manifest" "argocd_image_updater" {
         data.aws_caller_identity.caller.account_id
       ),
       "{irsa}",
-      module.irsa_argocd_updater.iam_role_arn
+      module.irsa_argocd_updater.arn
     ),
     "{region}",
     var.region

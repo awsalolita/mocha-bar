@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowKmsUseOnlyThroughS3InAccount",
+      "Effect": "Allow",
+      "Action": [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ],
+      "Resource": "arn:aws:kms:{Region}:{Account}:key/{KeyId}",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": "s3.{Region}.amazonaws.com",
+          "kms:CallerAccount": "{Account}"
+        }
+      }
+    }
+  ]
+}

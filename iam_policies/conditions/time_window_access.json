@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowOnlyDuringBusinessDeploymentWindow",
+      "Effect": "Deny",
+      "Action": [
+        "eks:*",
+        "ec2:RunInstances",
+        "rds:DeleteDBInstance"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "DateGreaterThan": {
+          "aws:CurrentTime": "2026-12-24T00:00:00Z"
+        },
+        "DateLessThan": {
+          "aws:CurrentTime": "2026-12-27T00:00:00Z"
+        }
+      }
+    }
+  ]
+}

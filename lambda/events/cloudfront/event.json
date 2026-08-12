@@ -1,0 +1,65 @@
+{
+  "version": "2.0",
+  "routeKey": "$default",
+  "rawPath": "/menu",
+  "rawQueryString": "lang=en",
+  "cookies": ["session=abc123"],
+  "headers": {
+    "accept": "application/json",
+    "accept-encoding": "gzip, deflate, br",
+    "cloudfront-forwarded-proto": "https",
+    "cloudfront-is-desktop-viewer": "true",
+    "cloudfront-is-mobile-viewer": "false",
+    "cloudfront-is-smarttv-viewer": "false",
+    "cloudfront-is-tablet-viewer": "false",
+    "cloudfront-viewer-address": "203.0.113.10:54321",
+    "cloudfront-viewer-asn": "16509",
+    "cloudfront-viewer-country": "US",
+    "content-type": "application/json",
+    "host": "abcdef123456.lambda-url.us-east-1.on.aws",
+    "user-agent": "Mozilla/5.0",
+    "via": "2.0 d111111abcdef8.cloudfront.net (CloudFront)",
+    "x-amz-cf-id": "4TyzHTaYWb1GX1qTfsHhEqV6HUDd_BzoBZnwfnvQc_1oF26ClkoUSEQ==",
+    "x-amzn-trace-id": "Root=1-66b7c0a0-0123456789abcdef01234567",
+    "x-forwarded-for": "203.0.113.10",
+    "x-forwarded-port": "443",
+    "x-forwarded-proto": "https"
+  },
+  "queryStringParameters": {
+    "lang": "en"
+  },
+  "requestContext": {
+    "accountId": "123456789012",
+    "apiId": "abcdef123456",
+    "authentication": null,
+    "authorizer": {
+      "iam": {
+        "accessKey": "ASIAEXAMPLEKEY",
+        "accountId": "123456789012",
+        "callerId": "AROAEXAMPLE:CloudFront",
+        "cognitoIdentity": null,
+        "principalOrgId": null,
+        "userArn": "arn:aws:sts::123456789012:assumed-role/CloudFront-LambdaURL-OAC/CloudFront",
+        "userId": "AROAEXAMPLE:CloudFront"
+      }
+    },
+    "domainName": "abcdef123456.lambda-url.us-east-1.on.aws",
+    "domainPrefix": "abcdef123456",
+    "http": {
+      "method": "GET",
+      "path": "/menu",
+      "protocol": "HTTP/1.1",
+      "sourceIp": "3.172.107.76",
+      "userAgent": "Amazon CloudFront"
+    },
+    "requestId": "9aac5154-0123-4567-89ab-cdef01234567",
+    "routeKey": "$default",
+    "stage": "$default",
+    "time": "10/Aug/2026:12:52:00 +0000",
+    "timeEpoch": 1786364520000
+  },
+  "body": null,
+  "pathParameters": null,
+  "isBase64Encoded": false,
+  "stageVariables": null
+}
