@@ -1,4 +1,4 @@
-[{
+{
     "Sid": "Allow generate data key access for Fargate tasks.",
     "Effect": "Allow",
     "Principal": {
@@ -44,4 +44,4 @@
         }
     },
     "Resource": "*"
-}]
+}

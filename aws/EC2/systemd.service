@@ -1,0 +1,21 @@
+[Unit]
+Description=Python Application with venv Isolation
+After=network.target
+
+[Service]
+# systemd runs as root by default, but you can explicitly state it
+User=root
+Group=root
+
+# Crucial: Tells systemd where to look for your app files
+WorkingDirectory=/home/ssm-user/dev
+
+# Crucial: Execute the Python binary inside the venv directly
+ExecStart=/home/ssm-user/dev/venv/bin/python3 /home/ssm-user/dev/main.py
+
+# Restart configuration
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

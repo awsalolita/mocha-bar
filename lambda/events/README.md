@@ -3,6 +3,9 @@
 Reference AWS Lambda handlers, one per common event source. Each service has
 its own folder with:
 
+For handlers that *call* Textract, Rekognition, Comprehend, and the other AI
+APIs, see [`../ai/`](../ai/).
+
 - `event.json` — a realistic sample event as AWS delivers it to Lambda.
 - `handler.py` — a Python handler (`lambda_handler(event, context)`) that
   parses that event and pulls out the useful fields.

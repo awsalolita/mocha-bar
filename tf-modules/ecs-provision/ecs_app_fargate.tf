@@ -67,7 +67,7 @@ module "ecs_service" {
       essential = true
       image     = "ghcr.io/pmh-only/the-biggie:latest"
 
-      health_check = {
+      healthCheck = {
         command = [
           "CMD-SHELL",
           <<-EOF
@@ -84,33 +84,31 @@ module "ecs_service" {
       #   valueFrom = "arn:aws:secretsmanager:ap-northeast-2:<ACCOUNT_ID>:secret:project-rds-r5wn4n"
       # }]
 
-      port_mappings = [
+      portMappings = [
         {
           name          = "myapp"
           containerPort = 8080
+          hostPort      = 8080
           protocol      = "tcp"
         }
       ]
 
 
-      log_configuration = {
+      enable_cloudwatch_logging              = true
+      create_cloudwatch_log_group            = true
+      cloudwatch_log_group_name              = "/aws/ecs/${local.ecs_cluster_name}/project-myapp"
+      cloudwatch_log_group_retention_in_days = 14
+      
+      logConfiguration = {
         logDriver = "awslogs"
         options = {
           awslogs-group         = "/aws/ecs/${local.ecs_cluster_name}/project-myapp"
           awslogs-region        = var.region
           awslogs-stream-prefix = "ecs"
-          awslogs-create-group  = "true"
         }
       }
 
-
-      # log_configuration = {
-      #   logDriver = "awsfirelens"
-      #   options   = {}
-      # }
-
-      create_cloudwatch_log_group = false
-      readonly_root_filesystem    = false
+      readonlyRootFilesystem = false
     }
 
 
@@ -118,7 +116,7 @@ module "ecs_service" {
     #   essential = true
     #   image     = "009160052643.dkr.ecr.${var.region}.amazonaws.com/baseflue:latest"
 
-    #   health_check = {
+    #   healthCheck = {
     #     command  = ["CMD-SHELL", "exit 0"]
     #     interval = 5
     #     timeout  = 2
@@ -167,7 +165,7 @@ module "ecs_service" {
     #     }
     #   ]
 
-    #   log_configuration = {
+    #   logConfiguration = {
     #     logDriver = "awslogs"
     #     options = {
     #       awslogs-group         = "/aws/ecs/${module.ecs.cluster_name}/myapp-logroute"
@@ -177,7 +175,7 @@ module "ecs_service" {
     #     }
     #   }
 
-    #   firelens_configuration = {
+    #   firelensConfiguration = {
     #     type = "fluentbit"
     #     options = {
     #       config-file-type  = "file"
@@ -186,7 +184,7 @@ module "ecs_service" {
     #   }
 
     #   create_cloudwatch_log_group = false
-    #   readonly_root_filesystem = false
+    #   readonlyRootFilesystem      = false
     # }
   }
 
@@ -200,21 +198,19 @@ module "ecs_service" {
 
   subnet_ids = [for subnet in local.ecs_cluster_subnets : aws_subnet.this[subnet.key].id]
 
-  security_group_rules = {
+  security_group_ingress_rules = {
     alb_ingress = {
-      type                     = "ingress"
-      from_port                = 8080
-      to_port                  = 8080
-      protocol                 = "tcp"
-      description              = "Service port"
-      source_security_group_id = module.alb.security_group_id
+      from_port                    = 8080
+      to_port                      = 8080
+      ip_protocol                  = "tcp"
+      description                  = "Service port"
+      referenced_security_group_id = module.alb.security_group_id
     }
+  }
+  security_group_egress_rules = {
     egress_all = {
-      type        = "egress"
-      from_port   = 0
-      to_port     = 0
-      protocol    = "-1"
-      cidr_blocks = ["0.0.0.0/0"]
+      ip_protocol = "-1"
+      cidr_ipv4   = "0.0.0.0/0"
     }
   }
 

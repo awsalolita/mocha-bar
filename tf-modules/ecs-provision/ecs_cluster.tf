@@ -19,39 +19,39 @@ module "ecs" {
   cluster_name                = local.ecs_cluster_name
   create_cloudwatch_log_group = false
 
-  cluster_settings = [
+  cluster_setting = [
     {
       name  = "containerInsights"
       value = "enhanced"
     }
   ]
 
-  # FARGATE
-  # fargate_capacity_providers = {
+  # FARGATE (built-in providers — associate + default strategy)
+  # cluster_capacity_providers = ["FARGATE", "FARGATE_SPOT"]
+  # default_capacity_provider_strategy = {
   #   FARGATE = {
-  #     default_capacity_provider_strategy = {
-  #       weight = 20
-  #     }
+  #     weight = 20
+  #     base   = 1
   #   }
   #   FARGATE_SPOT = {
-  #     default_capacity_provider_strategy = {
-  #       weight = 80
-  #     }
+  #     weight = 80
   #   }
   # }
 
   # EC2
-  autoscaling_capacity_providers = {
+  capacity_providers = {
     EC2 = {
-      auto_scaling_group_arn         = module.autoscaling.autoscaling_group_arn
-      managed_termination_protection = "ENABLED"
-      instance_warmup_period         = 0
+      auto_scaling_group_provider = {
+        auto_scaling_group_arn         = module.autoscaling.autoscaling_group_arn
+        managed_termination_protection = "ENABLED"
 
-      managed_scaling = {
-        maximum_scaling_step_size = 32
-        minimum_scaling_step_size = 1
-        status                    = "ENABLED"
-        target_capacity           = 100
+        managed_scaling = {
+          instance_warmup_period    = 0
+          maximum_scaling_step_size = 32
+          minimum_scaling_step_size = 1
+          status                    = "ENABLED"
+          target_capacity           = 100
+        }
       }
     }
   }
