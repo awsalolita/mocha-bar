@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  nginx
+  namespace: default
+  labels:
+    app:  nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  nginx
+    spec:
+      containers:
+      - name:  nginx
+        image: public.ecr.aws/nginx/nginx:1.30-alpine3.24-slim-amd64v8
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "45"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+
+        ports:
+        - containerPort: 80
+          name:  nginx
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: cache
+          mountPath: /usr/share/nginx/html
+          
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: cache
+          persistentVolumeClaim:
+            claimName: s3-pvc
+          
+      restartPolicy: Always

@@ -1,0 +1,109 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: unicorn-cluster
+  region: us-east-1
+  version: "1.36"
+  tags:
+    Project: unicorn
+
+# Encrypt Kubernetes secrets at rest with your KMS CMK
+secretsEncryption:
+  keyARN: arn:aws:kms:us-east-1:317775606280:key/3a7f6905-7d5d-40ed-b11f-d5b295a9ae8a
+# Register cluster with ARC zonal shift (same as Terraform cluster_zonal_shift_config)
+zonalShiftConfig:
+  enabled: true
+
+iam:
+  withOIDC: true
+
+vpc:
+  id: vpc-0baa7b14b53006e84
+  subnets:
+    private:
+      us-east-1a: { id: subnet-0306933a99c56b5f6 }
+      us-east-1b: { id: subnet-035cdb84e34496944 }
+
+  # API server endpoint access
+  # public+private = reachable from internet (restricted by CIDRs) and from inside VPC
+  clusterEndpoints:
+    publicAccess: false
+    privateAccess: true
+
+  # Restrict who can reach the public API endpoint (recommended when publicAccess: true)
+  publicAccessCIDRs:
+    - 0.0.0.0/0   # replace with your office/VPN CIDRs, e.g. 203.0.113.10/32
+
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["*"]   # api, audit, authenticator, controllerManager, scheduler
+    logRetentionInDays: 30
+
+addons:
+  - name: vpc-cni
+    version: latest
+    resolveConflicts: overwrite
+    configurationValues: |-
+      {
+        "env": {
+          "ENABLE_PREFIX_DELEGATION": "true",
+          "WARM_PREFIX_TARGET": "1"
+        }
+      }
+  - name: coredns
+    version: latest
+    resolveConflicts: overwrite
+  - name: kube-proxy
+    version: latest
+    resolveConflicts: overwrite
+  - name: aws-ebs-csi-driver
+    version: latest
+    resolveConflicts: overwrite
+    wellKnownPolicies:
+      ebsCSIController: true
+
+managedNodeGroups:
+  - name: apps
+    instanceType: t3.medium
+    amiFamily: AmazonLinux2023
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 27
+    privateNetworking: true
+
+    volumeSize: 40
+    volumeType: gp3
+    volumeEncrypted: true
+    # volumeKmsKeyID: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+    disableIMDSv1: true
+    maxPodsPerNode: 110
+
+    labels:
+      role: apps
+      workload: general
+
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        ebs: true
+        fsx: false
+        efs: false
+        albIngress: true
+        cloudWatch: true
+        externalDNS: false
+        certManager: false
+
+    # Optional: SSM instead of SSH
+    ssh:
+      enableSsm: true
+
+    # Keep override only if you still want bootstrap-level max-pods;
+    # maxPodsPerNode above usually covers managed AL2023 nodegroups.
+    # overrideBootstrapCommand: |
+    #   #!/bin/bash
+    #   /etc/eks/bootstrap.sh unicorn-cluster \
+    #     --use-max-pods false \
+    #     --kubelet-extra-args '--max-pods=110'

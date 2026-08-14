@@ -50,49 +50,45 @@ module "alb" {
       port     = 80
       protocol = "HTTP"
 
-      forward = {
-        target_group_key = "myapp"
+      fixed_response = {
+        content_type = "text/plain"
+        message_body = "404 Not Found"
+        status_code  = "404"
       }
 
-      # fixed_response = {
-      #   content_type = "text/plain"
-      #   message_body = "404 Not Found"
-      #   status_code  = "404"
-      # }
-      #
-      # rules = {
-      #   forward = {
-      #     priority = 100
-      #     actions = [
-      #       {
-      #         weighted_forward = {
-      #           target_groups = [
-      #             {
-      #               target_group_key = "myapp"
-      #               weight           = 100
-      #             },
-      #             {
-      #               target_group_key = "myapp-green"
-      #               weight           = 0
-      #             }
-      #           ]
-      #         }
-      #       }
-      #     ]
-      #
-      #     conditions = [{
-      #       path_pattern = {
-      #         values = ["/*"]
-      #       }
-      #     }]
-      #   }
-      # }
+      rules = {
+        forward = {
+          priority = 100
+          actions = [
+            {
+              weighted_forward = {
+                target_groups = [
+                  {
+                    target_group_key = "myapp"
+                    weight           = 100
+                  },
+                  # {
+                  #   target_group_key = "myapp-green"
+                  #   weight           = 0
+                  # }
+                ]
+              }
+            }
+          ]
+
+          conditions = [{
+            path_pattern = {
+              values = ["/*"]
+            }
+          }]
+        }
+      }
     }
   }
 
   target_groups = {
     myapp = {
-      name_prefix       = "myapp-"
+      name              = "${var.project_name}-myapp"
       create_attachment = false
       protocol          = "HTTP"
       port              = 8080

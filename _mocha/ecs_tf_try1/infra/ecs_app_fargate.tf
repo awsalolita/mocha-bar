@@ -1,5 +1,3 @@
-# replace all name - ecs_service
-
 module "ecs_service" {
   source = "terraform-aws-modules/ecs/aws//modules/service"
 
@@ -13,7 +11,20 @@ module "ecs_service" {
     type = "ECS" # or CODE_DEPLOY
   }
 
-  enable_execute_command = true
+  capacity_provider_strategy = {
+    FARGATE = {
+      capacity_provider = "FARGATE"
+      weight            = 20
+      base              = 1
+    }
+    FARGATE_SPOT = {
+      capacity_provider = "FARGATE_SPOT"
+      weight            = 80
+    }
+  }
+
+  enable_execute_command   = true
+  requires_compatibilities = ["FARGATE"]
 
   deployment_maximum_percent         = 150
   deployment_minimum_healthy_percent = 100
@@ -23,44 +34,59 @@ module "ecs_service" {
     rollback = true
   }
 
-  requires_compatibilities = ["EC2"]
-  capacity_provider_strategy = {
-    EC2 = {
-      capacity_provider = module.ecs.capacity_providers["EC2"].name
-      weight            = 1
-      base              = 1
-    }
-  }
+  # Disable creation of the task definition; `task_definition_arn` should be provided
+  create_task_definition = true
+  # task_definition_arn = "arn:aws:iam::538573288964:role/game-ecs-task-role"
 
-  tasks_iam_role_policies = {
-    CloudWatchLogsFullAccess = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
-  }
+  # Disable creation of the task execution IAM role; `task_exec_iam_role_arn` should be provided
+  create_task_exec_iam_role = false
+  task_exec_iam_role_arn = "arn:aws:iam::538573288964:role/game-task-exec-role"
 
-  task_exec_iam_role_policies = {
-    CloudWatchLogsFullAccess = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
-  }
+  # Disable creation of the task execution IAM role policy
+  create_task_exec_policy = false
 
-  cpu    = 128
-  memory = 128
+  # Disable creation of the tasks IAM role; `tasks_iam_role_arn` should be provided
+  create_tasks_iam_role = false
+  tasks_iam_role_arn = "arn:aws:iam::538573288964:role/game-ecs-task-role"
+
+  # tasks_iam_role_policies = {
+  #   CloudWatchLogsFullAccess = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+  # }
+
+  # task_exec_iam_role_policies = {
+  #   CloudWatchLogsFullAccess = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+  # }
+
+  # CPU value 	    Memory value
+  # 256 (.25 vCPU) 	512 MiB, 1 GB, 2 GB
+  # 512 (.5 vCPU) 	1 GB, 2 GB, 3 GB, 4 GB
+  # 1024 (1 vCPU) 	2 GB, 3 GB, 4 GB, 5 GB, 6 GB, 7 GB, 8 GB
+  # 2048 (2 vCPU) 	Between 4 GB and 16 GB in 1 GB increments
+  # 4096 (4 vCPU) 	Between 8 GB and 30 GB in 1 GB increments
+  # 8192 (8 vCPU)   Between 16 GB and 60 GB in 4 GB increments
+  # 16384 (16vCPU)  Between 32 GB and 120 GB in 8 GB increments
+
+  cpu    = 256
+  memory = 512
 
   # cpuArchitecture
   # Valid Values: X86_64 | ARM64
 
   runtime_platform = {
-    cpu_architecture        = "ARM64"
+    cpu_architecture        = "X86_64"
     operating_system_family = "LINUX"
   }
 
   container_definitions = {
     myapp = {
       essential = true
-      image     = "ghcr.io/pmh-only/the-biggie:latest"
+      image     = "538573288964.dkr.ecr.us-east-1.amazonaws.com/plant:v2"
 
-      health_check = {
+      healthCheck = {
         command = [
           "CMD-SHELL",
           <<-EOF
-            curl -f http://localhost:8080/healthcheck || exit 1
+            curl -f http://localhost:8080/health || exit 1
           EOF
         ]
         interval = 5
@@ -73,46 +99,39 @@ module "ecs_service" {
       #   valueFrom = "arn:aws:secretsmanager:ap-northeast-2:<ACCOUNT_ID>:secret:project-rds-r5wn4n"
       # }]
 
-      port_mappings = [
+      portMappings = [
         {
           name          = "myapp"
           containerPort = 8080
+          hostPort      = 8080
           protocol      = "tcp"
         }
       ]
 
-      log_configuration = {
+
+      enable_cloudwatch_logging              = true
+      create_cloudwatch_log_group            = true
+      cloudwatch_log_group_name              = "/aws/ecs/${local.ecs_cluster_name}/plant_logs"
+      cloudwatch_log_group_retention_in_days = 14
+
+      logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = "/aws/ecs/${local.ecs_cluster_name}/project-myapp"
+          awslogs-group         = "/aws/ecs/${local.ecs_cluster_name}/plant_logs"
           awslogs-region        = var.region
           awslogs-stream-prefix = "ecs"
-          awslogs-create-group  = "true"
         }
       }
 
-      # log_configuration = {
-      #   logDriver = "awsfirelens"
-      #   options   = {}
-      # }
-
-      # log_configuration = {
-      #   logDriver = "fluentd"
-      #   options = {
-      #     fluentd-address = "unix:///var/run/fluent.sock",
-      #     tag             = "app.{{.FullID}}"
-      #   }
-      # }
-
-      create_cloudwatch_log_group = false
-      readonly_root_filesystem    = false
+      readonlyRootFilesystem = false
     }
+
 
     # log_router = {
     #   essential = true
     #   image     = "009160052643.dkr.ecr.${var.region}.amazonaws.com/baseflue:latest"
 
-    #   health_check = {
+    #   healthCheck = {
     #     command  = ["CMD-SHELL", "exit 0"]
     #     interval = 5
     #     timeout  = 2
@@ -140,7 +159,7 @@ module "ecs_service" {
     #           Name cloudwatch
     #           Match *
     #           region ${var.region}
-    #           log_group_name /aws/ecs/${local.ecs_cluster_name}/myapp
+    #           log_group_name /aws/ecs/${module.ecs.cluster_name}/myapp
     #           log_stream_name $${TASK_ID}
     #           auto_create_group true
     #         EOF
@@ -159,19 +178,19 @@ module "ecs_service" {
     #         EOF
     #       )
     #     }
-    #  ]
+    #   ]
 
-    #   log_configuration = {
+    #   logConfiguration = {
     #     logDriver = "awslogs"
     #     options = {
-    #       awslogs-group         = "/aws/ecs/${local.ecs_cluster_name}/myapp-logroute"
+    #       awslogs-group         = "/aws/ecs/${module.ecs.cluster_name}/myapp-logroute"
     #       awslogs-region        = var.region
     #       awslogs-stream-prefix = "ecs"
     #       awslogs-create-group  = "true"
     #     }
     #   }
 
-    #   firelens_configuration = {
+    #   firelensConfiguration = {
     #     type = "fluentbit"
     #     options = {
     #       config-file-type  = "file"
@@ -180,7 +199,7 @@ module "ecs_service" {
     #   }
 
     #   create_cloudwatch_log_group = false
-    #   readonly_root_filesystem = false
+    #   readonlyRootFilesystem      = false
     # }
   }
 
@@ -210,17 +229,6 @@ module "ecs_service" {
     }
   }
 
-  ordered_placement_strategy = [
-    {
-      field = "attribute:ecs.availability-zone"
-      type  = "spread"
-    },
-    {
-      field = "instanceId"
-      type  = "spread"
-    }
-  ]
-
   desired_count            = 2
   autoscaling_max_capacity = 64
   autoscaling_min_capacity = 2
@@ -228,18 +236,17 @@ module "ecs_service" {
     high = {
       policy_type = "StepScaling"
       step_scaling_policy_configuration = {
-        adjustment_type          = "PercentChangeInCapacity"
-        cooldown                 = 0
-        min_adjustment_magnitude = 2
-        metric_aggregation_type  = "Average"
+        adjustment_type         = "ChangeInCapacity"
+        cooldown                = 0
+        metric_aggregation_type = "Average"
 
         step_adjustment = [
           {
-            scaling_adjustment          = 50
+            scaling_adjustment          = 2
             metric_interval_upper_bound = 90 - 80
           },
           {
-            scaling_adjustment          = 100
+            scaling_adjustment          = 4
             metric_interval_lower_bound = 90 - 80
           }
         ]
@@ -254,16 +261,16 @@ module "ecs_service" {
 
         step_adjustment = [
           {
-            scaling_adjustment          = -2
+            scaling_adjustment          = -1
             metric_interval_lower_bound = 50 - 65
           },
           {
-            scaling_adjustment          = -4
+            scaling_adjustment          = -2
             metric_interval_upper_bound = 50 - 65
             metric_interval_lower_bound = 25 - 65
           },
           {
-            scaling_adjustment          = -6
+            scaling_adjustment          = -4
             metric_interval_upper_bound = 25 - 65
           }
         ]

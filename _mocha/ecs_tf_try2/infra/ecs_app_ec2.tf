@@ -32,35 +32,47 @@ module "ecs_service" {
     }
   }
 
-  tasks_iam_role_policies = {
-    CloudWatchLogsFullAccess = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
-  }
 
-  task_exec_iam_role_policies = {
-    CloudWatchLogsFullAccess = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
-  }
+  # Disable creation of the task execution IAM role; `task_exec_iam_role_arn` should be provided
+  create_task_exec_iam_role = false
+  task_exec_iam_role_arn = "arn:aws:iam::253862056991:role/game-ecs-task-exec-role"
 
-  cpu    = 128
-  memory = 128
+  # Disable creation of the task execution IAM role policy
+  create_task_exec_policy = false
+
+  # Disable creation of the tasks IAM role; `tasks_iam_role_arn` should be provided
+  create_tasks_iam_role = false
+  tasks_iam_role_arn = "arn:aws:iam::253862056991:role/game-ecs-task-role"
+
+  # tasks_iam_role_policies = {
+  #   CloudWatchLogsFullAccess = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+  # }
+
+  # task_exec_iam_role_policies = {
+  #   CloudWatchLogsFullAccess = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+  # }
+
+  cpu    = 512
+  memory = 1024
 
   # cpuArchitecture
   # Valid Values: X86_64 | ARM64
 
   runtime_platform = {
-    cpu_architecture        = "ARM64"
+    cpu_architecture        = "X86_64"
     operating_system_family = "LINUX"
   }
 
   container_definitions = {
     myapp = {
       essential = true
-      image     = "ghcr.io/pmh-only/the-biggie:latest"
+      image     = "253862056991.dkr.ecr.us-east-1.amazonaws.com/plant:v2"
 
       health_check = {
         command = [
           "CMD-SHELL",
           <<-EOF
-            curl -f http://localhost:8080/healthcheck || exit 1
+            curl -f http://localhost:8080/health || exit 1
           EOF
         ]
         interval = 5
@@ -73,7 +85,7 @@ module "ecs_service" {
       #   valueFrom = "arn:aws:secretsmanager:ap-northeast-2:<ACCOUNT_ID>:secret:project-rds-r5wn4n"
       # }]
 
-      port_mappings = [
+      portMappings = [
         {
           name          = "myapp"
           containerPort = 8080
@@ -84,7 +96,7 @@ module "ecs_service" {
       log_configuration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = "/aws/ecs/${local.ecs_cluster_name}/project-myapp"
+          awslogs-group         = "/aws/ecs/${local.ecs_cluster_name}/plant-logs"
           awslogs-region        = var.region
           awslogs-stream-prefix = "ecs"
           awslogs-create-group  = "true"
@@ -103,8 +115,10 @@ module "ecs_service" {
       #     tag             = "app.{{.FullID}}"
       #   }
       # }
-
-      create_cloudwatch_log_group = false
+      enable_cloudwatch_logging              = true
+      create_cloudwatch_log_group            = true
+      cloudwatch_log_group_name              = "/aws/ecs/${local.ecs_cluster_name}/plant-logs"
+      cloudwatch_log_group_retention_in_days = 14
       readonly_root_filesystem    = false
     }
 

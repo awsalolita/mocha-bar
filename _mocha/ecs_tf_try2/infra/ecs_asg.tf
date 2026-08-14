@@ -1,6 +1,6 @@
 locals {
-  ecs_ami_arch = "arm64"        # arm64 or x86_64
-  ecs_ami_os   = "bottlerocket" # bottlerocket or al2023
+  ecs_ami_arch = "x86_64"        # arm64 or x86_64
+  ecs_ami_os   = "al2023" # bottlerocket or al2023
 }
 
 module "autoscaling" {
@@ -9,7 +9,7 @@ module "autoscaling" {
   name = "${var.project_name}-node"
 
   image_id      = data.aws_ami.ecs["${local.ecs_ami_arch}:${local.ecs_ami_os}"].id
-  instance_type = "t4g.micro"
+  instance_type = "t3.medium"
 
   update_default_version = true
 
