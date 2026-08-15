@@ -67,3 +67,19 @@ r = get_resource("eu-west-1")
 | `route53.py` | Route 53 zones + records |
 | `ecr.py` | ECR repositories + images |
 | `ecs.py` | ECS clusters, task defs, services |
+
+### AI / ML services (all client-only)
+
+| File | Service |
+|---|---|
+| `bedrock.py` | Bedrock foundation models — invoke/converse (Claude, Titan/Nova, Llama), embeddings, images |
+| `rekognition.py` | Rekognition — labels/text/faces, moderation, face collections |
+| `textract.py` | Textract — OCR + forms/tables, sync + async S3 jobs |
+| `comprehend.py` | Comprehend — language, sentiment, entities, key phrases, PII |
+| `transcribe.py` | Transcribe — async speech-to-text jobs + custom vocabulary |
+| `polly.py` | Polly — text-to-speech (sync + async S3 tasks) |
+| `translate.py` | Translate — real-time + batch document translation |
+
+> These live in the **`bedrock`, `rekognition`, `textract`, `comprehend`, `transcribe`, `polly`, `translate`** service namespaces.
+> Bedrock is special: the **control plane** (`boto3.client("bedrock")`) manages models/guardrails, while the
+> **runtime** (`boto3.client("bedrock-runtime")`) is what you actually call to run inference.
