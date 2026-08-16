@@ -45,3 +45,4 @@ terraform.rc
 
 # Ignore Terraform plugin/provider caches under _mocha at any depth
 _mocha/**/.terraform/
+_mocha/
