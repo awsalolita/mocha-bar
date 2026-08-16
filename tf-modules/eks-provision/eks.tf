@@ -136,6 +136,8 @@ module "eks" {
 }
 
 resource "aws_eks_access_entry" "karpenter" {
+  count = local.enable_karpenter ? 1 : 0
+
   principal_arn = module.eks_blueprints_addons.karpenter.node_iam_role_arn
   cluster_name  = module.eks.cluster_name
   type          = "EC2_LINUX"

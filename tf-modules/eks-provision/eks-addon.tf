@@ -1,6 +1,7 @@
 locals {
-  enable_argocd = false
-  enable_calico = false
+  enable_argocd    = false
+  enable_calico    = false
+  enable_karpenter = false
 }
 
 module "eks_blueprints_addons" {
@@ -52,7 +53,7 @@ module "eks_blueprints_addons" {
   enable_argocd                       = local.enable_argocd
   enable_kube_prometheus_stack        = false
   enable_aws_gateway_api_controller   = false
-  enable_karpenter                    = false
+  enable_karpenter                    = local.enable_karpenter
   enable_metrics_server               = true
   enable_cluster_autoscaler           = true
   enable_aws_load_balancer_controller = true # <- eks auto
@@ -149,6 +150,24 @@ module "eks_blueprints_addons" {
   }
 
   helm_releases = {
+    # cilium = {
+    #   repository = "https://helm.cilium.io"
+    #   chart      = "cilium"
+    #   name       = "cilium"
+    #   namespace = "kube-system"
+    #   values = [<<-EOF
+    #     cni:
+    #       chainingMode: aws-cni
+    #       exclusive: false
+    #     enableIPv4Masquerade: false
+    #     routingMode: native
+    #     endpointRoutes:
+    #       enabled: true
+    #     # Keep EKS kube-proxy; chaining usually does not replace it
+    #     kubeProxyReplacement: false
+    #   EOF
+    #   ]
+    # }
     # descheduler = {
     #   repository = "https://kubernetes-sigs.github.io/descheduler"
     #   chart      = "descheduler"
