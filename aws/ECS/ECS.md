@@ -148,3 +148,11 @@ aws ecs execute-command --cluster <clusterName> --task "arn:aws:ecs:<region>:<ac
 * https://aws.amazon.com/blogs/containers/new-using-amazon-ecs-exec-access-your-containers-fargate-ec2/
 
 * https://alexanderhose.com/how-to-execute-commands-to-manage-your-containers-in-aws-ecs/##setup-of-iam-roles-%F0%9F%91%A5
+
+
+## Lattice
+1. create service network
+2. associate vpcs to that network
+3. for Security Groups we allow listener lattice target group port from lattice prefix list
+4. then create lattice service with security group inbound from lattice prefix list for cluster/service
+5. we can call services with dns names

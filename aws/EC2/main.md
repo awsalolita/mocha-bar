@@ -1,0 +1,1 @@
+* when we put our ec2 instance in the private subnet without internet we can access the subnet to the s3 gateway endpoint and then launch the amazon linux 2023 then we can install anything with dnf.

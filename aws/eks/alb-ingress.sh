@@ -1,6 +1,6 @@
 export NAMESPACE="kube-system"
-export CLUSTER_NAME="unicorn-cluster"
-export VPC_ID="vpc-014b4c26e8138665b"
+export CLUSTER_NAME="concert-eks"
+export VPC_ID="vpc-0fd0de8790becb5cd"
 export REGION="us-east-1"
 
 curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
