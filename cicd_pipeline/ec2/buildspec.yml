@@ -1,0 +1,31 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - APPLICATION_NAME=${APPLICATION_NAME:?APPLICATION_NAME is required}
+      - DEPLOYMENT_GROUP=${DEPLOYMENT_GROUP:?DEPLOYMENT_GROUP is required}
+      - REVISION_BUCKET=${S3_BUCKET:?S3_BUCKET is required}
+      - REVISION_KEY=${REVISION_KEY:-codedeploy/<APP>/$(date +%Y%m%d%H%M%S).zip}
+
+  build:
+    commands:
+      # Expect repo layout: appspec.yml, scripts/*.sh, plus application files
+      - zip -r revision.zip appspec.yml scripts .
+      - aws s3 cp revision.zip s3://$REVISION_BUCKET/$REVISION_KEY
+
+  post_build:
+    commands:
+      - |
+        DEPLOYMENT_ID=$(aws deploy create-deployment \
+          --application-name $APPLICATION_NAME \
+          --deployment-group-name $DEPLOYMENT_GROUP \
+          --s3-location bucket=$REVISION_BUCKET,key=$REVISION_KEY,bundleType=zip \
+          --query deploymentId --output text)
+      - echo "DeploymentId=$DEPLOYMENT_ID"
+      - aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID
+
+artifacts:
+  files:
+    - revision.zip
+  discard-paths: yes

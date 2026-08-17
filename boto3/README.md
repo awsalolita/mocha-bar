@@ -67,6 +67,7 @@ r = get_resource("eu-west-1")
 | `route53.py` | Route 53 zones + records |
 | `ecr.py` | ECR repositories + images |
 | `ecs.py` | ECS clusters, task defs, services |
+| `kinesis.py` | Kinesis Data Streams (shards/records/iterators) + Amazon Data Firehose (S3 delivery) |
 
 ### AI / ML services (all client-only)
 

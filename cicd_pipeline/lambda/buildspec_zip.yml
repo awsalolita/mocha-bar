@@ -1,0 +1,42 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - FUNCTION_NAME=${FUNCTION_NAME:?FUNCTION_NAME is required}
+      - LAMBDA_ALIAS=${LAMBDA_ALIAS:-live}
+      - python --version || true
+      - pip install --upgrade pip
+
+  build:
+    commands:
+      # Package for Amazon Linux (CodeBuild). Adjust runtime / requirements path as needed.
+      - mkdir -p package
+      - |
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt -t package/
+        fi
+      - cp -r handler.py package/ 2>/dev/null || cp -r *.py package/
+      - |
+        if [ -d src ]; then
+          cp -r src package/
+        fi
+      - cd package && zip -r ../function.zip . && cd ..
+
+  post_build:
+    commands:
+      - aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://function.zip
+      - aws lambda wait function-updated --function-name $FUNCTION_NAME
+      - VERSION=$(aws lambda publish-version --function-name $FUNCTION_NAME --query Version --output text)
+      - |
+        if aws lambda get-alias --function-name $FUNCTION_NAME --name $LAMBDA_ALIAS >/dev/null 2>&1; then
+          aws lambda update-alias --function-name $FUNCTION_NAME --name $LAMBDA_ALIAS --function-version $VERSION
+        else
+          echo "Alias $LAMBDA_ALIAS not found; published version $VERSION only"
+        fi
+      - echo "Deployed $FUNCTION_NAME version $VERSION"
+
+artifacts:
+  files:
+    - function.zip
+  discard-paths: yes

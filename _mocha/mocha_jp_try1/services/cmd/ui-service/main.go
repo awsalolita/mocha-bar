@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"flag"
 	"io"
 	"log"
 	"net/http"
@@ -22,6 +23,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/factoryops/services/internal/config"
 	"github.com/factoryops/services/internal/httpx"
 )
 
@@ -32,8 +34,19 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC)
 	log.SetPrefix("[ui-service] ")
 
-	addr := ":" + httpx.Env(os.Getenv, "PORT", "8080")
-	coreURL := httpx.Env(os.Getenv, "CORE_SERVICE_URL", "http://core.svc.internal:8080")
+	configPath := flag.String("config", "", "path to config.ini (default: ./config.ini or next to binary)")
+	flag.Parse()
+
+	// Load config.ini. Precedence per setting: env var > config.ini > default.
+	conf := config.Load(*configPath)
+	if conf.Path != "" {
+		log.Printf("loaded configuration from %s", conf.Path)
+	} else {
+		log.Printf("no config.ini found; using environment variables and defaults")
+	}
+
+	addr := ":" + conf.Value("PORT", "server", "port", "8080")
+	coreURL := conf.Value("CORE_SERVICE_URL", "services", "core_service_url", "http://core.svc.internal:8080")
 	client := &http.Client{Timeout: 15 * time.Second}
 
 	index, err := webFS.ReadFile("web/index.html")

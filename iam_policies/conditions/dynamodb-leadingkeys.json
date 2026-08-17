@@ -1,0 +1,34 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:GetItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:BatchGetItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:Query"
+            ],
+            "Resource": "arn:aws:dynamodb:us-west-2:661994220263:table/GameScores",
+            "Effect": "Allow",
+            "Condition": {
+                "ForAllValues:StringEquals": {
+                    "dynamodb:LeadingKeys": "${www.amazon.com:user_id}",
+                    "dynamodb:Attributes": [
+                        "UserId",
+                        "GameTitle",
+                        "Wins",
+                        "Losses",
+                        "TopScore",
+                        "TopScoreDateTime"
+                    ]
+                },
+                "StringEqualsIfExists": {
+                    "dynamodb:Select": "SPECIFIC_ATTRIBUTES"
+                }
+            }
+        }
+    ]
+}
