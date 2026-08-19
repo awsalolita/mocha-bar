@@ -1,0 +1,47 @@
+version: 0.2
+
+# Source-stage validation: lint, unit tests and coverage.
+# Language-agnostic: runs whichever toolchain it detects in the repo.
+
+phases:
+  install:
+    commands:
+      - node -v || true
+      - python --version || true
+      - mkdir -p reports
+
+  pre_build:
+    commands:
+      - |
+        if [ -f package.json ]; then
+          npm ci || npm install
+        fi
+      - |
+        if [ -f requirements.txt ]; then
+          pip install --upgrade pip
+          pip install -r requirements.txt
+        fi
+
+  build:
+    commands:
+      - |
+        if [ -f package.json ]; then
+          npm run lint --if-present
+          CI=true npm test --if-present
+        fi
+      - |
+        if [ -f requirements.txt ] || ls ./*.py >/dev/null 2>&1; then
+          pip install ruff pytest pytest-cov >/dev/null 2>&1 || true
+          ruff check .
+          pytest --junitxml=reports/pytest.xml --cov=. --cov-report=xml:reports/coverage.xml
+        fi
+
+reports:
+  unit-tests:
+    files:
+      - 'reports/*.xml'
+    file-format: JUNITXML
+
+artifacts:
+  files:
+    - 'reports/**/*'

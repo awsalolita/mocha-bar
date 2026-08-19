@@ -1,0 +1,72 @@
+version: 0.2
+
+# Zip-based Lambda deploy shifted gradually via CodeDeploy (canary/linear).
+# Requires a CodeDeploy application + deployment group of type Lambda whose
+# DeploymentConfig is e.g. CodeDeployDefault.LambdaCanary10Percent5Minutes.
+
+env:
+  variables:
+    LAMBDA_ALIAS: "live"
+
+phases:
+  pre_build:
+    commands:
+      - FUNCTION_NAME=${FUNCTION_NAME:?FUNCTION_NAME is required}
+      - CODEDEPLOY_APP=${CODEDEPLOY_APP:?CODEDEPLOY_APP is required}
+      - CODEDEPLOY_GROUP=${CODEDEPLOY_GROUP:?CODEDEPLOY_GROUP is required}
+      - pip install --upgrade pip
+
+  build:
+    commands:
+      - mkdir -p package
+      - |
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt -t package/
+        fi
+      - cp -r handler.py package/ 2>/dev/null || cp -r ./*.py package/
+      - |
+        if [ -d src ]; then cp -r src package/; fi
+      - cd package && zip -r ../function.zip . && cd ..
+
+  post_build:
+    commands:
+      - aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://function.zip
+      - aws lambda wait function-updated --function-name $FUNCTION_NAME
+      - TARGET_VERSION=$(aws lambda publish-version --function-name $FUNCTION_NAME --query Version --output text)
+      - |
+        CURRENT_VERSION=$(aws lambda get-alias --function-name $FUNCTION_NAME --name $LAMBDA_ALIAS \
+          --query FunctionVersion --output text 2>/dev/null || echo "1")
+      - echo "Shifting $LAMBDA_ALIAS from v$CURRENT_VERSION to v$TARGET_VERSION"
+      - |
+        cat > appspec.json <<EOF
+        {
+          "version": 0.0,
+          "Resources": [
+            {
+              "MyFunction": {
+                "Type": "AWS::Lambda::Function",
+                "Properties": {
+                  "Name": "$FUNCTION_NAME",
+                  "Alias": "$LAMBDA_ALIAS",
+                  "CurrentVersion": "$CURRENT_VERSION",
+                  "TargetVersion": "$TARGET_VERSION"
+                }
+              }
+            }
+          ]
+        }
+        EOF
+      - |
+        DEPLOYMENT_ID=$(aws deploy create-deployment \
+          --application-name $CODEDEPLOY_APP \
+          --deployment-group-name $CODEDEPLOY_GROUP \
+          --revision "revisionType=AppSpecContent,appSpecContent={content='$(cat appspec.json)'}" \
+          --query deploymentId --output text)
+      - echo "DeploymentId=$DEPLOYMENT_ID"
+      - aws deploy wait deployment-successful --deployment-id $DEPLOYMENT_ID
+
+artifacts:
+  files:
+    - function.zip
+    - appspec.json
+  discard-paths: yes
