@@ -33,9 +33,14 @@ Legend:
 
 ---
 
+
+
 ## 1. Identity & access
 
+
+
 ### IAM
+
 - [ ] No long-lived access keys on users when SSO/roles are available
 - [ ] MFA on human users / console users
 - [ ] Password policy strong (length, reuse, expiration if required)
@@ -46,17 +51,26 @@ Legend:
 - [ ] Access Analyzer findings reviewed / remediated
 - [ ] IAM credential report reviewed (unused users/keys)
 
+
+
 ### AWS Organizations / Account
+
 - [ ] SCPs deny dangerous actions if org is in scope (disable leaving org, deny unencrypted writes, deny public S3, etc.)
 - [ ] Separate accounts (prod/sec/log) if architecture allows
 - [ ] CloudTrail / Config / GuardDuty delegated admin if multi-account
 
+
+
 ### AWS SSO / IAM Identity Center
+
 - [ ] Permission sets least privilege
 - [ ] MFA enforced
 - [ ] Session duration limited
 
+
+
 ### Cognito (if used)
+
 - [ ] MFA / advanced security mode
 - [ ] Strong password policy
 - [ ] App client secrets not in code
@@ -64,9 +78,14 @@ Legend:
 
 ---
 
+
+
 ## 2. Encryption & keys
 
+
+
 ### KMS
+
 - [ ] Prefer **customer-managed keys (CMK)** for data stores scoring encryption
 - [ ] Automatic key rotation enabled on CMKs
 - [ ] Key policy least privilege; separate admin vs usage principals
@@ -74,19 +93,28 @@ Legend:
 - [ ] CloudTrail logs KMS API calls
 - [ ] Alias naming consistent; unused keys scheduled for deletion carefully (contest may penalize pending deletion)
 
+
+
 ### Secrets Manager
+
 - [ ] Secrets encrypted with CMK
 - [ ] Rotation enabled for DB / API credentials
 - [ ] No plaintext secrets in env vars, userdata, or repos
 - [ ] Resource policies restrict principals / VPC endpoints
 - [ ] Recovery window set (not immediate delete) when deleting secrets
 
+
+
 ### Systems Manager Parameter Store
+
 - [ ] Sensitive params as `SecureString` with CMK
 - [ ] Hierarchy + IAM path restrictions
 - [ ] Prefer Secrets Manager for rotating credentials
 
+
+
 ### Certificate Manager (ACM)
+
 - [ ] TLS certs on ALB / CloudFront / API Gateway
 - [ ] DNS validation preferred
 - [ ] No expired / unused certs
@@ -94,9 +122,14 @@ Legend:
 
 ---
 
+
+
 ## 3. Logging, detection & compliance
 
+
+
 ### CloudTrail
+
 - [ ] Multi-Region trail
 - [ ] Management events + data events for S3 / Lambda if required
 - [ ] Log file validation enabled
@@ -105,52 +138,81 @@ Legend:
 - [ ] CloudWatch Logs integration + metric filters / alarms (root login, unauthorized API, IAM changes)
 - [ ] Insights enabled if useful for contest scoring
 
+
+
 ### AWS Config
+
 - [ ] Configuration recorder ON in all used Regions
 - [ ] Global resource types recorded
 - [ ] Managed rules: encryption, public access, MFA, restricted SSH/RDP, etc.
 - [ ] Conformance packs (CIS / Operational Best Practices) if available
 - [ ] SNS / EventBridge remediation hooks if scoring expects auto-fix
 
+
+
 ### Security Hub
+
 - [ ] Standards enabled (FSBP, CIS, PCI if relevant)
 - [ ] Findings triaged; Critical/High remediated
 - [ ] Aggregator Region configured for multi-Region
 
+
+
 ### GuardDuty
+
 - [ ] Enabled all Regions
 - [ ] Malware Protection for EBS / S3 as available
 - [ ] Runtime Monitoring for EKS/ECS/EC2 if in scope
 - [ ] Findings exported / alarmed via EventBridge → SNS
 
+
+
 ### Inspector
+
 - [ ] EC2 scanning enabled
 - [ ] ECR continuous scanning enabled
 - [ ] Lambda scanning enabled
 - [ ] Critical CVEs remediated / images rebuilt
 
+
+
 ### Macie
+
 - [ ] Sensitive data discovery jobs on key buckets
 - [ ] Findings reviewed
 
+
+
 ### CloudWatch
+
 - [ ] Log groups retention set (never “Never expire” unless required; contest often wants retention)
 - [ ] Log groups encrypted with CMK (where supported)
 - [ ] Metric alarms on CPU, errors, 5xx, free storage, throttle, DLQ depth
 - [ ] Dashboards for critical services
 - [ ] Composite alarms for noisy metrics if needed
 
+
+
 ### X-Ray / Application Signals
+
 - [ ] Tracing on APIs, Lambda, ECS/EKS apps if observability scored
 
+
+
 ### AWS Backup Audit Manager / AWS Audit Manager
+
 - [ ] Enable if compliance evidence is scored
 
 ---
 
+
+
 ## 4. Networking
 
+
+
 ### VPC
+
 - [ ] No unnecessary public subnets / open routes
 - [ ] Separate public / private / data subnets
 - [ ] NAT Gateway(s) or endpoints for private egress (prefer VPC endpoints for AWS APIs)
@@ -159,36 +221,54 @@ Legend:
 - [ ] DNS hostnames + resolution enabled as needed
 - [ ] DHCP options correct
 
+
+
 ### Subnets / Routing
+
 - [ ] Databases / caches in **private** subnets only
 - [ ] No `0.0.0.0/0` route on private route tables except via NAT
 - [ ] Transit Gateway / peering least routes if used
 
+
+
 ### Security Groups
+
 - [ ] Least privilege ports/CIDRs
 - [ ] No `0.0.0.0/0` on SSH (22) / RDP (3389) / DB ports
 - [ ] Prefer SG → SG references over CIDR where possible
 - [ ] Unused SGs cleaned up
 - [ ] Description on every rule
 
+
+
 ### Network Firewall / WAF / Shield
+
 - [ ] AWS WAF WebACL on ALB / CloudFront / API GW (AWS Managed Rules + rate limit)
 - [ ] AWS Network Firewall if east-west / egress filtering required
 - [ ] Shield Advanced + Route53 health checks if DDoS scoring exists
 
+
+
 ### VPC Endpoints
+
 - [ ] Interface/Gateway endpoints for S3, DynamoDB, ECR, Secrets Manager, Logs, STS, KMS, SSM
 - [ ] Endpoint policies least privilege
 - [ ] Private DNS enabled on interface endpoints
 
+
+
 ### Route 53
+
 - [ ] DNSSEC if required
 - [ ] Query logging enabled
 - [ ] Health checks + failover for HA
 - [ ] Alias records to AWS targets (ALB/CloudFront)
 - [ ] Domain registrar lock / transfer lock if applicable
 
+
+
 ### CloudFront
+
 - [ ] HTTPS only / redirect HTTP→HTTPS
 - [ ] TLS 1.2+ minimum
 - [ ] Origin Access Control (OAC) for S3 (not public buckets)
@@ -198,7 +278,10 @@ Legend:
 - [ ] Cache policies least privilege (don’t forward secrets)
 - [ ] Origin custom headers / signed URLs for private content
 
+
+
 ### API Gateway
+
 - [ ] AuthN/Z (IAM, Cognito, Lambda authorizer) — no open APIs
 - [ ] TLS / custom domain with ACM
 - [ ] Access logging + execution logging (ERROR/INFO as needed)
@@ -209,9 +292,14 @@ Legend:
 
 ---
 
+
+
 ## 5. Load balancing & edge
 
+
+
 ### Application Load Balancer (ALB)
+
 - [ ] **Deletion protection** enabled
 - [ ] **Access logs** enabled → S3 (bucket policy + encryption / CMK)
 - [ ] **Connection logs** enabled if available / required
@@ -228,7 +316,10 @@ Legend:
 - [ ] Cross-zone load balancing as required
 - [ ] HTTP/2 / gRPC only if intentional
 
+
+
 ### Network Load Balancer (NLB)
+
 - [ ] Deletion protection enabled
 - [ ] Access / connection logs if supported for contest version
 - [ ] TLS listeners with ACM where terminating TLS
@@ -236,20 +327,31 @@ Legend:
 - [ ] Security groups on NLB (newer feature) restricted
 - [ ] Proxy protocol / client IP preservation intentional
 
+
+
 ### Gateway Load Balancer
+
 - [ ] Deletion protection
 - [ ] Appliance health checks
 - [ ] Flow stickiness as required
 
+
+
 ### Elastic IP / Global Accelerator
+
 - [ ] Unused EIPs released (cost + hygiene)
 - [ ] Global Accelerator flow logs if used
 
 ---
 
+
+
 ## 6. Compute
 
+
+
 ### EC2
+
 - [ ] EBS volumes **encrypted** (CMK preferred); encryption by default ON
 - [ ] IMDSv2 **required** (`HttpTokens=required`); hop limit 1–2 as appropriate
 - [ ] No public IP unless required; prefer private + SSM
@@ -264,7 +366,10 @@ Legend:
 - [ ] Nitro / modern instance types where required
 - [ ] Dedicated tenancy / placements only if mandated
 
+
+
 ### Auto Scaling Group (ASG)
+
 - [ ] Health checks (ELB) configured
 - [ ] Multiple AZs
 - [ ] Scaling policies / target tracking
@@ -272,7 +377,10 @@ Legend:
 - [ ] Instance refresh / warm pools if needed
 - [ ] Notifications on launch/terminate failures
 
+
+
 ### Lambda
+
 - [ ] Least privilege execution role
 - [ ] Environment variables encrypted with CMK (sensitive)
 - [ ] In VPC only if needing private resources; then use endpoints
@@ -284,7 +392,10 @@ Legend:
 - [ ] Code signing if required
 - [ ] No wildcard resource permissions
 
+
+
 ### Elastic Beanstalk (if used)
+
 - [ ] Managed platform updates
 - [ ] Enhanced health reporting
 - [ ] HTTPS listener
@@ -293,9 +404,14 @@ Legend:
 
 ---
 
+
+
 ## 7. Containers
 
+
+
 ### ECR
+
 - [ ] Image scanning on push (or Inspector continuous)
 - [ ] Encryption with CMK
 - [ ] Repo policies least privilege; no public repos unless required
@@ -303,7 +419,10 @@ Legend:
 - [ ] Lifecycle policies (expire untagged / old images)
 - [ ] Prefer private endpoints for pulls
 
+
+
 ### ECS
+
 - [ ] Task definitions: no privileged unless required
 - [ ] Readonly root filesystem where possible
 - [ ] Secrets from Secrets Manager / SSM (not plaintext env)
@@ -316,7 +435,10 @@ Legend:
 - [ ] Container Insights / Container Insights with enhanced observability
 - [ ] Fargate platform latest; ephemeral storage encrypted (default)
 
+
+
 ### EKS
+
 - [ ] Private API endpoint (public disabled or restricted CIDRs)
 - [ ] Secrets encryption with CMK (envelope encryption)
 - [ ] Cluster logging: api, audit, authenticator, controllerManager, scheduler → CloudWatch
@@ -332,16 +454,24 @@ Legend:
 - [ ] Backup cluster state / etcd via appropriate tools if required
 - [ ] Deletion protection / retain on managed node groups as contest requires
 
+
+
 ### App Runner / Lightsail (if appear)
+
 - [ ] HTTPS only
 - [ ] Private connectivity / VPC connector when talking to data plane
 - [ ] Health checks + auto deploy controlled
 
 ---
 
+
+
 ## 8. Storage
 
+
+
 ### S3
+
 - [ ] Block Public Access (account + bucket) ON
 - [ ] Default encryption **SSE-KMS with CMK** (prefer over SSE-S3 when scoring CMK)
 - [ ] Bucket key enabled (cost/perf for KMS)
@@ -358,7 +488,10 @@ Legend:
 - [ ] Access Points / Multi-Region Access Points policies reviewed
 - [ ] Inventory / Storage Lens for visibility
 
+
+
 ### EBS
+
 - [ ] Volumes encrypted (CMK)
 - [ ] Snapshots encrypted
 - [ ] DeleteOnTermination set intentionally
@@ -366,7 +499,10 @@ Legend:
 - [ ] Fast Snapshot Restore only if needed
 - [ ] Recycle Bin for EBS snapshots / AMIs enabled if available
 
+
+
 ### EFS
+
 - [ ] Encryption at rest (CMK)
 - [ ] Encryption in transit (`tls` mount option / stunnel)
 - [ ] Backup policy enabled (AWS Backup)
@@ -375,7 +511,10 @@ Legend:
 - [ ] Access points with POSIX user enforcement
 - [ ] Replication if DR required
 
+
+
 ### FSx (Windows / Lustre / NetApp / OpenZFS)
+
 - [ ] Encryption at rest (CMK)
 - [ ] Encryption in transit where supported
 - [ ] Automatic backups + retention
@@ -383,16 +522,24 @@ Legend:
 - [ ] Private subnets / SG restricted
 - [ ] Deletion protection / final backup on delete if available
 
+
+
 ### Storage Gateway / Backup Gateway
+
 - [ ] Encrypted cache / upload buffers
 - [ ] Upload to encrypted S3
 - [ ] Monitoring alarms
 
 ---
 
+
+
 ## 9. Databases
 
+
+
 ### Common DB checklist (apply to all engines)
+
 - [ ] Encryption at rest (**CMK**)
 - [ ] Encryption in transit (TLS required / `rds.force_ssl` / parameter groups)
 - [ ] Private subnets; **not publicly accessible**
@@ -409,7 +556,10 @@ Legend:
 - [ ] Parameter / option groups hardened
 - [ ] IAM DB auth if supported & useful
 
+
+
 ### RDS (MySQL / Postgres / MariaDB / SQL Server / Oracle)
+
 - [ ] Storage encrypted with CMK
 - [ ] Deletion protection enabled
 - [ ] Automated backups + PITR window
@@ -419,7 +569,10 @@ Legend:
 - [ ] Proxy (RDS Proxy) if connection storms / failover scoring
 - [ ] Event subscriptions to SNS
 
+
+
 ### Aurora (MySQL / PostgreSQL)
+
 - [ ] Storage encryption CMK
 - [ ] Backtrack (MySQL) if useful
 - [ ] Continuous backup / PITR
@@ -428,7 +581,10 @@ Legend:
 - [ ] Deletion protection
 - [ ] Activity streams if advanced DB auditing scored
 
+
+
 ### DynamoDB
+
 - [ ] Encryption at rest with **CMK** (owned by customer)
 - [ ] **Point-in-time recovery (PITR)** enabled
 - [ ] Deletion protection enabled
@@ -442,7 +598,10 @@ Legend:
 - [ ] Backup via AWS Backup / on-demand backups as required
 - [ ] DAX cluster encrypted if used
 
+
+
 ### ElastiCache (Redis / Memcached) / MemoryDB
+
 - [ ] Encryption at rest (CMK where supported)
 - [ ] Encryption in transit (TLS)
 - [ ] AUTH / RBAC / Secrets Manager for Redis
@@ -452,7 +611,10 @@ Legend:
 - [ ] SG restricted
 - [ ] Deletion / final snapshot intentional
 
+
+
 ### Redshift
+
 - [ ] Encryption CMK
 - [ ] Publicly accessible = false
 - [ ] Automated snapshots + retention
@@ -463,7 +625,10 @@ Legend:
 - [ ] Snapshot copy encrypted
 - [ ] Deletion / terminate protections via IaC care
 
+
+
 ### DocumentDB / Neptune / Timestream / Keyspaces / QLDB
+
 - [ ] Encryption at rest CMK
 - [ ] TLS in transit
 - [ ] Audit / slow logs to CloudWatch
@@ -473,9 +638,14 @@ Legend:
 
 ---
 
+
+
 ## 10. Analytics & streaming
 
+
+
 ### Kinesis Data Streams / Firehose / Data Analytics
+
 - [ ] Server-side encryption (KMS/CMK)
 - [ ] Enhanced fan-out intentional
 - [ ] CloudWatch monitoring + alarms
@@ -483,7 +653,10 @@ Legend:
 - [ ] Transformation Lambda least privilege
 - [ ] Source/dest VPC for Firehose when private
 
+
+
 ### MSK (Kafka) / MSK Serverless / MQ
+
 - [ ] Encryption at rest CMK
 - [ ] Encryption in transit TLS
 - [ ] SASL/IAM auth preferred over plaintext
@@ -492,7 +665,10 @@ Legend:
 - [ ] Auto-scaling / storage monitoring
 - [ ] MQ: audit logging, encryption, private access
 
+
+
 ### EMR / Athena / Glue / Lake Formation
+
 - [ ] S3 data lake buckets encrypted CMK + Block Public Access
 - [ ] Glue catalog encryption + connection passwords encrypted
 - [ ] EMR security config (at-rest + in-transit)
@@ -500,7 +676,10 @@ Legend:
 - [ ] Lake Formation: LF-TBAC / grants least privilege; no broad IAM S3
 - [ ] Job bookmarks / logging enabled
 
+
+
 ### OpenSearch Service
+
 - [ ] Encryption at rest CMK
 - [ ] Node-to-node encryption
 - [ ] HTTPS enforced
@@ -513,9 +692,14 @@ Legend:
 
 ---
 
+
+
 ## 11. Messaging & integration
 
+
+
 ### SQS
+
 - [ ] SSE with CMK (SSE-KMS)
 - [ ] Dead-letter queue configured + redrive policy
 - [ ] Access policy least privilege; deny non-TLS
@@ -523,27 +707,39 @@ Legend:
 - [ ] Visibility timeout matches consumer
 - [ ] FIFO only if ordering/dedup required
 
+
+
 ### SNS
+
 - [ ] SSE with CMK
 - [ ] Topic policy least privilege; deny non-TLS
 - [ ] Subscription confirmation / filter policies
 - [ ] Delivery status logging to CloudWatch/Firehose/S3
 - [ ] HTTPS endpoints only for HTTP(S) subscriptions
 
+
+
 ### EventBridge
+
 - [ ] Event buses resource policies least privilege
 - [ ] Archive + replay if durability scored
 - [ ] DLQ on targets
 - [ ] Encrypted connections to targets
 - [ ] Schema registry if used
 
+
+
 ### Step Functions
+
 - [ ] Logging level ALL/ERROR to CloudWatch (CMK)
 - [ ] X-Ray tracing
 - [ ] Least privilege role
 - [ ] Sensitive data not in plaintext state I/O (use redact / Secrets)
 
+
+
 ### AppSync
+
 - [ ] Auth modes secured
 - [ ] Logging + X-Ray
 - [ ] Caching encrypted
@@ -551,9 +747,14 @@ Legend:
 
 ---
 
+
+
 ## 12. CI/CD & source
 
+
+
 ### CodeCommit / CodeBuild / CodePipeline / CodeDeploy
+
 - [ ] Encryption CMK on artifacts bucket
 - [ ] Artifact S3: Block Public Access, versioning, logging
 - [ ] Build logs to CloudWatch; no secrets in plaintext logs
@@ -562,15 +763,23 @@ Legend:
 - [ ] CodeBuild privileged mode OFF unless Docker-in-Docker required
 - [ ] VPC config for private resource access
 
+
+
 ### CodeArtifact / ECR (again)
+
 - [ ] External connections reviewed
 - [ ] Domain encryption
 
 ---
 
+
+
 ## 13. Backup & DR (cross-service)
 
+
+
 ### AWS Backup
+
 - [ ] Backup plan covering: EBS, EFS, FSx, RDS/Aurora, DynamoDB, EC2, S3, Storage Gateway, DocumentDB, Neptune, Fargate volumes as supported
 - [ ] Backup vault encrypted with CMK
 - [ ] **Vault Lock** (WORM) if ransomware / immutability scored
@@ -580,27 +789,41 @@ Legend:
 - [ ] SNS notifications on backup job failures
 - [ ] Access policies deny delete backup unless break-glass role
 
+
+
 ### Snapshots hygiene
+
 - [ ] Automated; tagged; encrypted
 - [ ] Shared snapshots not public
 - [ ] Recycle Bin rules for EBS / AMIs / EC2
 
 ---
 
+
+
 ## 14. Edge security & DNS mail (if in scope)
 
+
+
 ### WAF
+
 - [ ] AWS Managed Rule groups (Core, Known Bad Inputs, SQLi, Linux/Windows)
 - [ ] Rate-based rules
 - [ ] Logging to S3 / Firehose / CloudWatch (encrypted)
 - [ ] Associated to all public ALB/CloudFront/API GW
 
+
+
 ### Shield
+
 - [ ] Shield Advanced subscriptions + health-based detection if allowed
 - [ ] DRT access / proactive engagement if applicable
 - [ ] Route 53 + CloudFront + ALB covered
 
+
+
 ### SES / Pinpoint
+
 - [ ] DKIM / SPF / DMARC
 - [ ] Configuration set logging
 - [ ] Dedicated IPs only if needed
@@ -609,9 +832,14 @@ Legend:
 
 ---
 
+
+
 ## 15. Machine learning (if appear)
 
+
+
 ### SageMaker
+
 - [ ] Volume / data encryption CMK
 - [ ] Network isolation / VPC only
 - [ ] No direct internet from training if avoidable
@@ -620,7 +848,10 @@ Legend:
 - [ ] Model artifacts in encrypted S3
 - [ ] CloudWatch / audit logging
 
+
+
 ### Bedrock / Comprehend / Rekognition / Translate
+
 - [ ] Data encryption / opt-out of service improvement if required
 - [ ] Private VPC endpoints / PrivateLink
 - [ ] IAM least privilege + SCPs
@@ -628,55 +859,75 @@ Legend:
 
 ---
 
+
+
 ## 16. Hybrid & management
 
+
+
 ### Systems Manager
+
 - [ ] Fleet Manager / Session Manager preferred over SSH
 - [ ] Session logging to S3/CloudWatch (encrypted) + CMK
 - [ ] Patch Manager baselines associated
 - [ ] State Manager / Inventory enabled
 - [ ] Default Host Management Configuration / instance profile with `AmazonSSMManagedInstanceCore`
 
+
+
 ### Systems Manager Incident Manager / OpsCenter / Chatbot
+
 - [ ] Engaging path for P1 findings if scored
 
+
+
 ### AWS Resource Explorer / Tag Editor
+
 - [ ] Mandatory tags: `Environment`, `Owner`, `CostCenter`, `DataClass`
 - [ ] Untaggable / untagged resources fixed (many contests score tagging)
 
+
+
 ### Cost / Billing hygiene (often scored)
+
 - [ ] Budgets + anomaly detection
 - [ ] Unused EIPs, old snapshots, unattached EBS, idle LBs removed or justified
 - [ ] S3 incomplete multipart uploads aborted via lifecycle
 
 ---
 
+
+
 ## 17. Per-service “quick card” (print this)
 
-| Service | Encrypt (CMK) | Deletion protection | Backup / PITR | Logging | Network |
-|---|---|---|---|---|---|
-| S3 | SSE-KMS CMK + Bucket Key | N/A (use Object Lock / versioning) | Versioning + AWS Backup / replication | Access logs / CloudTrail data events | Private / OAC / Block Public Access |
-| EBS | CMK | Termination protection on instance | Snapshots / AWS Backup / Recycle Bin | CloudTrail | Private subnet instance |
-| EFS | CMK + TLS mount | — | AWS Backup policy | CloudWatch / backup jobs | Private mount targets |
-| RDS / Aurora | CMK + TLS | ON | Automated backups + PITR | Logs export + PI | Private, not public |
-| DynamoDB | CMK | ON | PITR + AWS Backup | CloudWatch + Contributor Insights | Gateway endpoint |
-| ElastiCache / MemoryDB | Rest + transit | Snapshot on delete | Automated backups | CloudWatch | Private |
-| ALB | TLS (ACM) | ON | N/A | Access + connection logs | SG + WAF |
-| NLB | TLS if terminating | ON | N/A | Logs if available | SG restricted |
-| CloudFront | TLS1.2+ | — | N/A | Access logs | OAC + WAF |
-| API Gateway | TLS + cache encrypt | — | N/A | Access + execution logs | Private API / WAF |
-| Lambda | Env CMK + logs CMK | — | N/A (use DLQ) | CW Logs + X-Ray | VPC + endpoints if needed |
-| ECS/Fargate | Secrets + logs | — | N/A | CW / FireLens / Insights | Private awsvpc |
-| EKS | Secrets CMK + node EBS | Careful destroy | etcd/app backups | Control plane logs | Private API + IRSA |
-| SQS/SNS | SSE-KMS CMK | — | DLQ / delivery retries | Delivery status | Deny non-TLS |
-| OpenSearch | CMK + node-to-node | — | Snapshots | Audit + app logs | VPC only |
-| MSK | CMK + TLS | — | — | Broker logs | Private |
-| Redshift | CMK + SSL | Careful | Automated snapshots | Audit to S3 | Enhanced VPC routing |
-| CloudTrail | CMK on bucket | Object Lock bucket | Bucket versioning | Trail + CW metrics | Org trail |
-| KMS | Rotation ON | Pending deletion caution | — | CloudTrail | Key policies |
-| Backup vault | CMK | Vault Lock | Cross-Region copy | Job notifications | Vault policy |
+
+| Service                | Encrypt (CMK)            | Deletion protection                | Backup / PITR                         | Logging                              | Network                             |
+| ---------------------- | ------------------------ | ---------------------------------- | ------------------------------------- | ------------------------------------ | ----------------------------------- |
+| S3                     | SSE-KMS CMK + Bucket Key | N/A (use Object Lock / versioning) | Versioning + AWS Backup / replication | Access logs / CloudTrail data events | Private / OAC / Block Public Access |
+| EBS                    | CMK                      | Termination protection on instance | Snapshots / AWS Backup / Recycle Bin  | CloudTrail                           | Private subnet instance             |
+| EFS                    | CMK + TLS mount          | —                                  | AWS Backup policy                     | CloudWatch / backup jobs             | Private mount targets               |
+| RDS / Aurora           | CMK + TLS                | ON                                 | Automated backups + PITR              | Logs export + PI                     | Private, not public                 |
+| DynamoDB               | CMK                      | ON                                 | PITR + AWS Backup                     | CloudWatch + Contributor Insights    | Gateway endpoint                    |
+| ElastiCache / MemoryDB | Rest + transit           | Snapshot on delete                 | Automated backups                     | CloudWatch                           | Private                             |
+| ALB                    | TLS (ACM)                | ON                                 | N/A                                   | Access + connection logs             | SG + WAF                            |
+| NLB                    | TLS if terminating       | ON                                 | N/A                                   | Logs if available                    | SG restricted                       |
+| CloudFront             | TLS1.2+                  | —                                  | N/A                                   | Access logs                          | OAC + WAF                           |
+| API Gateway            | TLS + cache encrypt      | —                                  | N/A                                   | Access + execution logs              | Private API / WAF                   |
+| Lambda                 | Env CMK + logs CMK       | —                                  | N/A (use DLQ)                         | CW Logs + X-Ray                      | VPC + endpoints if needed           |
+| ECS/Fargate            | Secrets + logs           | —                                  | N/A                                   | CW / FireLens / Insights             | Private awsvpc                      |
+| EKS                    | Secrets CMK + node EBS   | Careful destroy                    | etcd/app backups                      | Control plane logs                   | Private API + IRSA                  |
+| SQS/SNS                | SSE-KMS CMK              | —                                  | DLQ / delivery retries                | Delivery status                      | Deny non-TLS                        |
+| OpenSearch             | CMK + node-to-node       | —                                  | Snapshots                             | Audit + app logs                     | VPC only                            |
+| MSK                    | CMK + TLS                | —                                  | —                                     | Broker logs                          | Private                             |
+| Redshift               | CMK + SSL                | Careful                            | Automated snapshots                   | Audit to S3                          | Enhanced VPC routing                |
+| CloudTrail             | CMK on bucket            | Object Lock bucket                 | Bucket versioning                     | Trail + CW metrics                   | Org trail                           |
+| KMS                    | Rotation ON              | Pending deletion caution           | —                                     | CloudTrail                           | Key policies                        |
+| Backup vault           | CMK                      | Vault Lock                         | Cross-Region copy                     | Job notifications                    | Vault policy                        |
+
 
 ---
+
+
 
 ## 18. Contest remediation script mindset
 
@@ -686,6 +937,8 @@ When a finding appears (Security Hub / Config / Trusted Advisor / Inspector):
 2. **Apply the matching row** in this checklist (encrypt → protect → backup → log → lock network)
 3. **Re-run** Security Hub / Config evaluation
 4. **Evidence**: screenshot or CLI output showing the setting ON (for scoring judges)
+
+
 
 ### Handy verification commands (examples)
 
@@ -719,6 +972,8 @@ aws configservice describe-configuration-recorders
 ```
 
 ---
+
+
 
 ## 19. Final sweep (before submit / freeze)
 
