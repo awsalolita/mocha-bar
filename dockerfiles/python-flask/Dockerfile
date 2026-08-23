@@ -4,7 +4,10 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-RUN pip install -t .lib -r requirements.txt
+# Install into an isolated prefix so the runtime stage can copy just the
+# packages (no pip/build artifacts). --prefix keeps the standard
+# lib/pythonX.Y/site-packages layout so it drops straight into /usr/local.
+RUN pip install --prefix=/install -r requirements.txt
 
 # ---
 
@@ -20,8 +23,10 @@ RUN apt-get update \
 USER $user:$group
 WORKDIR /app
 
-COPY --from=build /app/.lib .lib
+# Land deps in the interpreter's default site-packages (/usr/local/...), so
+# they're on sys.path without PYTHONPATH. The CloudWatch/OTel operator can then
+# set PYTHONPATH freely for auto-instrumentation without hiding Flask.
+COPY --from=build /install /usr/local
 COPY src src
 
-ENV PYTHONPATH=/app/.lib
 ENTRYPOINT ["python3", "src/app.py"]
