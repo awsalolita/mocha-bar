@@ -156,3 +156,6 @@ aws ecs execute-command --cluster <clusterName> --task "arn:aws:ecs:<region>:<ac
 3. for Security Groups we allow listener lattice target group port from lattice prefix list
 4. then create lattice service with security group inbound from lattice prefix list for cluster/service
 5. we can call services with dns names
+
+
+### Don't make the ECS task role None -> we get failure at EC2 endpoint metadata call

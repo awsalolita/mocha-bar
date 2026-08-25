@@ -15,3 +15,22 @@ aws eks update-nodegroup-config \
 
 # increase the max pods
 kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
+
+
+## Tag subnets for alb
+PUBLIC_SUBNETS="subnet-0e25872d6708dfd00 subnet-0258a22c15e82c3b1"
+PRIVATE_SUBNETS="subnet-064f436baff8f0723 subnet-0862a9409c71a7aae"
+EKS_NAME="app-cluster"
+VPC_ID="vpc-0b8972f42da2b8497"
+
+aws ec2 create-tags --resources $PUBLIC_SUBNETS --tags Key=kubernetes.io/cluster/$EKS_NAME,Value=shared Key=kubernetes.io/role/elb,Value=1
+
+# Tag private subnets
+aws ec2 create-tags --resources $PRIVATE_SUBNETS --tags Key=kubernetes.io/cluster/$EKS_NAME,Value=shared Key=kubernetes.io/role/internal-elb,Value=1
+
+
+# Enable DNS resolution
+aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-support
+
+# Enable DNS hostnames
+aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames
