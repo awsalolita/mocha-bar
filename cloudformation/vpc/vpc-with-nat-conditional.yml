@@ -1,0 +1,233 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  VPC with 2 AZs, 1 public + 1 private subnet per AZ, per-subnet route tables,
+  and 2 NAT GWs. Creates a new VPC/IGW when none is supplied, or attaches the
+  subnets/route-tables/NAT to an EXISTING VPC/IGW when their IDs are provided.
+
+Parameters:
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: CIDR for the VPC. Used ONLY when a new VPC is created.
+  NamePrefix:
+    Type: String
+    Default: app
+    Description: Tag prefix used in Name tags
+
+  # --- Reuse controls: leave BLANK to create, or pass an ID to reuse ---
+  ExistingVpcId:
+    Type: String
+    Default: ''
+    Description: >-
+      ID of an existing VPC to reuse (e.g. vpc-0abc123def456). Leave BLANK to
+      create a new VPC from VpcCidr.
+  ExistingIgwId:
+    Type: String
+    Default: ''
+    Description: >-
+      ID of an existing Internet Gateway ALREADY attached to the VPC
+      (e.g. igw-0abc123def456). Leave BLANK to create and attach a new IGW.
+
+Conditions:
+  # true when the corresponding ExistingXxxId parameter was left blank
+  CreateVpc: !Equals [!Ref ExistingVpcId, '']
+  CreateIgw: !Equals [!Ref ExistingIgwId, '']
+
+Mappings:
+  SubnetCidrs:
+    az0:
+      public:  10.0.0.0/20
+      private: 10.0.16.0/20
+    az1:
+      public:  10.0.48.0/20
+      private: 10.0.64.0/20
+
+Resources:
+  # ============================================================
+  # VPC + IGW  -- created ONLY when no existing ID is supplied
+  # ============================================================
+  VPC:
+    Type: AWS::EC2::VPC
+    Condition: CreateVpc
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}' }]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Condition: CreateIgw
+    Properties:
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}-igw' }]
+
+  # Attach the IGW only when we created a new one. If ExistingIgwId is given we
+  # assume it is already attached to the VPC (a VPC allows only one IGW).
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Condition: CreateIgw
+    Properties:
+      VpcId: !If [CreateVpc, !Ref VPC, !Ref ExistingVpcId]
+      InternetGatewayId: !Ref InternetGateway
+
+  # ============================================================
+  # Subnets -- always created, attached to the new-or-existing VPC
+  # ============================================================
+  PublicSubnetAz0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !If [CreateVpc, !Ref VPC, !Ref ExistingVpcId]
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !FindInMap [SubnetCidrs, az0, public]
+      MapPublicIpOnLaunch: true
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}-public-az0' }]
+  PrivateSubnetAz0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !If [CreateVpc, !Ref VPC, !Ref ExistingVpcId]
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !FindInMap [SubnetCidrs, az0, private]
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}-private-az0' }]
+
+  PublicSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !If [CreateVpc, !Ref VPC, !Ref ExistingVpcId]
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !FindInMap [SubnetCidrs, az1, public]
+      MapPublicIpOnLaunch: true
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}-public-az1' }]
+  PrivateSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !If [CreateVpc, !Ref VPC, !Ref ExistingVpcId]
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !FindInMap [SubnetCidrs, az1, private]
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}-private-az1' }]
+
+  # ============================================================
+  # Route Tables (one per subnet) -- always created
+  # ============================================================
+  PublicRouteTableAz0:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !If [CreateVpc, !Ref VPC, !Ref ExistingVpcId]
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}-rt-public-az0' }]
+  PublicRouteTableAz1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !If [CreateVpc, !Ref VPC, !Ref ExistingVpcId]
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}-rt-public-az1' }]
+  PrivateRouteTableAz0:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !If [CreateVpc, !Ref VPC, !Ref ExistingVpcId]
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}-rt-private-az0' }]
+  PrivateRouteTableAz1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !If [CreateVpc, !Ref VPC, !Ref ExistingVpcId]
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}-rt-private-az1' }]
+
+  # ============================================================
+  # NAT Gateways (exactly two, one per AZ) -- always created
+  # ============================================================
+  EIPA:
+    Type: AWS::EC2::EIP
+    Properties: { Domain: vpc }
+  EIPB:
+    Type: AWS::EC2::EIP
+    Properties: { Domain: vpc }
+
+  NATA:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt EIPA.AllocationId
+      SubnetId: !Ref PublicSubnetAz0
+      ConnectivityType: public
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}-nat-az0' }]
+  NATB:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt EIPB.AllocationId
+      SubnetId: !Ref PublicSubnetAz1
+      ConnectivityType: public
+      Tags: [{ Key: Name, Value: !Sub '${NamePrefix}-nat-az1' }]
+
+  # ============================================================
+  # Routes: Public -> IGW (new or existing)
+  # ============================================================
+  # DependsOn VPCGatewayAttachment guarantees the IGW is attached before the
+  # route is created. When ExistingIgwId is supplied that attachment resource is
+  # conditioned out, and CloudFormation simply ignores the DependsOn on a
+  # not-created resource (DependsOn tolerates false Conditions; Ref/GetAtt do not).
+  PublicDefaultRouteAz0:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTableAz0
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !If [CreateIgw, !Ref InternetGateway, !Ref ExistingIgwId]
+  PublicDefaultRouteAz1:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTableAz1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !If [CreateIgw, !Ref InternetGateway, !Ref ExistingIgwId]
+
+  # Routes: Private -> NAT in same AZ
+  PrivateDefaultRouteAz0:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableAz0
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATA
+  PrivateDefaultRouteAz1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableAz1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATB
+
+  # ============================================================
+  # Associations (each subnet -> its own route table)
+  # ============================================================
+  AssocPublicAz0:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTableAz0
+      SubnetId: !Ref PublicSubnetAz0
+  AssocPublicAz1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTableAz1
+      SubnetId: !Ref PublicSubnetAz1
+  AssocPrivateAz0:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableAz0
+      SubnetId: !Ref PrivateSubnetAz0
+  AssocPrivateAz1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableAz1
+      SubnetId: !Ref PrivateSubnetAz1
+
+Outputs:
+  VpcId:
+    Description: The VPC used (newly created or the reused existing one)
+    Value: !If [CreateVpc, !Ref VPC, !Ref ExistingVpcId]
+  VpcWasCreated:
+    Description: true if this stack created the VPC, false if it reused an existing one
+    Value: !If [CreateVpc, 'true', 'false']
+  PublicSubnets:
+    Value: !Join [",", [!Ref PublicSubnetAz0, !Ref PublicSubnetAz1]]
+  PrivateSubnets:
+    Value: !Join [",", [!Ref PrivateSubnetAz0, !Ref PrivateSubnetAz1]]
+  PublicRouteTables:
+    Value: !Join [",", [!Ref PublicRouteTableAz0, !Ref PublicRouteTableAz1]]
+  PrivateRouteTables:
+    Value: !Join [",", [!Ref PrivateRouteTableAz0, !Ref PrivateRouteTableAz1]]
+  NatGateways:
+    Value: !Join [",", [!Ref NATA, !Ref NATB]]
