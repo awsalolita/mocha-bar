@@ -6,8 +6,6 @@ phases:
       - S3_BUCKET=${S3_BUCKET:?S3_BUCKET is required}
       - DISTRIBUTION_ID=${DISTRIBUTION_ID:?DISTRIBUTION_ID is required}
       - BUILD_DIR=${BUILD_DIR:-dist}
-      - node -v || true
-      - npm ci || npm install
 
   build:
     commands:

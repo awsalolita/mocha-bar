@@ -3,6 +3,23 @@ export CLUSTER_NAME="concert-eks"
 export VPC_ID="vpc-0fd0de8790becb5cd"
 export REGION="us-east-1"
 
+
+## Tag subnets for alb
+PUBLIC_SUBNETS="subnet-0f734812c1db682b2 subnet-0682663ac766f65c7"
+PRIVATE_SUBNETS="subnet-0e1a02ac2bd74c889 subnet-0142d434bf07c9117"
+
+aws ec2 create-tags --resources $PUBLIC_SUBNETS --tags Key=kubernetes.io/cluster/$CLUSTER_NAME,Value=shared Key=kubernetes.io/role/elb,Value=1
+
+# Tag private subnets
+aws ec2 create-tags --resources $PRIVATE_SUBNETS --tags Key=kubernetes.io/cluster/$CLUSTER_NAME,Value=shared Key=kubernetes.io/role/internal-elb,Value=1
+
+
+# Enable DNS resolution
+aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-support
+
+# Enable DNS hostnames
+aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames
+
 curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
 aws iam create-policy \
   --policy-name AWSLoadBalancerControllerIAMPolicy \
