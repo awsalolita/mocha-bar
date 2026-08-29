@@ -27,8 +27,13 @@ phases:
       - echo "Packaging application..."
       - zip -r function.zip . -x "*.git*"
       
-      - echo "Updating code and publishing new version..."
+      - echo "Updating Lambda function code..."
       - aws lambda update-function-code --function-name test --zip-file fileb://function.zip
+      
+      - echo "Waiting for function update to complete..."
+      - aws lambda wait function-updated --function-name test
+      
+      - echo "Publishing new version..."
       - NEW_VERSION=$(aws lambda publish-version --function-name test --query 'Version' --output text)
       
       - echo "Fetching current alias version..."
@@ -53,6 +58,7 @@ artifacts:
     - appspec.yaml
 ```
 
+## Dont publish lambda as latest(create one version manaully)
 
 * IAM persmission for CodeBuild:
 
