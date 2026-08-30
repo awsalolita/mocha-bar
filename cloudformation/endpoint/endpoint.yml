@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: VPC Endpoints architecture defining Interface endpoints by subnet and Gateway endpoints by route table.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Target VPC ID where endpoints will be created.
+
+  InterfaceSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnet IDs used for deploying Interface-type endpoints.
+
+  GatewayRouteTableIds:
+    Type: List<String>
+    Description: Route Table IDs to be updated with routes for Gateway-type endpoints.
+
+  EndpointSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security group attached to Interface endpoints allowing inbound HTTPS (443) from the VPC.
+
+Resources:
+  # ==========================================
+  # GATEWAY ENDPOINTS (Attached to Route Tables)
+  # ==========================================
+  DynamoDBGatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      VpcEndpointType: Gateway
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.dynamodb"
+      RouteTableIds: !Ref GatewayRouteTableIds
+
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      VpcEndpointType: Gateway
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      RouteTableIds: !Ref GatewayRouteTableIds
+
+  # ==========================================
+  # INTERFACE ENDPOINTS (Attached to Subnets)
+  # ==========================================
+  SQSInterfaceEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      VpcEndpointType: Interface
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.sqs"
+      SubnetIds: !Ref InterfaceSubnetIds
+      SecurityGroupIds: 
+        - !Ref EndpointSecurityGroupId
+      PrivateDnsEnabled: true
+
+  ECRAPIInterfaceEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      VpcEndpointType: Interface
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.api"
+      SubnetIds: !Ref InterfaceSubnetIds
+      SecurityGroupIds: 
+        - !Ref EndpointSecurityGroupId
+      PrivateDnsEnabled: true
+
+  ECRDKRInterfaceEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      VpcEndpointType: Interface
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.dkr"
+      SubnetIds: !Ref InterfaceSubnetIds
+      SecurityGroupIds: 
+        - !Ref EndpointSecurityGroupId
+      PrivateDnsEnabled: true
+
+  CloudWatchLogsInterfaceEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      VpcEndpointType: Interface
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
+      SubnetIds: !Ref InterfaceSubnetIds
+      SecurityGroupIds: 
+        - !Ref EndpointSecurityGroupId
+      PrivateDnsEnabled: true

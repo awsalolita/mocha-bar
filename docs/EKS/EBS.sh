@@ -9,13 +9,14 @@ eksctl create iamserviceaccount \
   --region us-east-1
 
 
+### Addon
 eksctl create addon \
   --name aws-ebs-csi-driver \
   --cluster <CLUSTER_NAME> \
   --service-account-role-arn arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME> \
   --force
 
-### or helm
+### or HELM
 helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
 helm repo update
 helm upgrade --install aws-ebs-csi-driver \
