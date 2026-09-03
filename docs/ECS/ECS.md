@@ -159,3 +159,60 @@ aws ecs execute-command --cluster <clusterName> --task "arn:aws:ecs:<region>:<ac
 
 
 ### Don't make the ECS task role None -> we get failure at EC2 endpoint metadata call
+
+## AppConfig Integration
+
+To integrate AWS AppConfig with ECS, deploy the AWS AppConfig Agent as a **sidecar container** within your task definition. Your main application container can then request configuration data directly from the agent via a local HTTP call (`localhost:2772`). The agent handles polling AppConfig and caching the data automatically.
+
+### 1. Update Task Role IAM permissions
+Add the following permissions to your ECS **Task Role** so the agent can fetch the configurations:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "appconfig:StartConfigurationSession",
+                "appconfig:GetLatestConfiguration"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+### 2. Add the Sidecar to Task Definition
+Add the AppConfig Agent to the `containerDefinitions` array in your task definition using the official public ECR image:
+
+```json
+{
+    "name": "appconfig-agent",
+    "image": "public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.x",
+    "essential": true,
+    "portMappings": [
+        {
+            "containerPort": 2772,
+            "protocol": "tcp"
+        }
+    ],
+    "environment": [
+        {
+            "name": "SERVICE_REGION",
+            "value": "<region>" 
+        },
+        {
+            "name": "PREFETCH_LIST",
+            "value": "/applications/<application_name>/environments/<environment_name>/configurations/<configuration_name>"
+        }
+    ]
+}
+```
+
+### 3. Fetching the Configuration in your App
+Because ECS containers in the same task share the `awsvpc` network namespace, your application can simply fetch the configuration by making an HTTP GET request to the local agent:
+
+```bash
+curl "http://localhost:2772/applications/<application_name>/environments/<environment_name>/configurations/<configuration_name>"
+```
