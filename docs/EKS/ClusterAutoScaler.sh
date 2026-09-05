@@ -1,6 +1,8 @@
-CLUSTER=unicorn-cluster
-ASG=eks-app-ng-42cff051-521e-402e-0f6f-b654ef7c6fa6
-AUTOSCALER_IMAGE_TAG=v1.28.2 # Set this to match your EKS cluster version
+##################### SET RESOURCES FOR PODS #####################
+
+CLUSTER=unicorn
+ASG=eks-app-ng-2ed0391f-fc4b-66f1-6b87-19d93cfc3d7a
+AUTOSCALER_IMAGE_TAG=v1.36.1 # Set this to match your EKS cluster version
 
 aws autoscaling create-or-update-tags --tags \
   "ResourceId=$ASG,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=true" \
