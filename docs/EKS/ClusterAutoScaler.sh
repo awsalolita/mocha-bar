@@ -1,5 +1,6 @@
 CLUSTER=unicorn-cluster
 ASG=eks-app-ng-42cff051-521e-402e-0f6f-b654ef7c6fa6
+AUTOSCALER_IMAGE_TAG=v1.28.2 # Set this to match your EKS cluster version
 
 aws autoscaling create-or-update-tags --tags \
   "ResourceId=$ASG,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=true" \
@@ -35,7 +36,7 @@ cat << EOF > cluster_autoscaler_policy.json
             "Condition": {
                 "StringEquals": {
                     "aws:ResourceTag/k8s.io/cluster-autoscaler/enabled": "true",
-                    "aws:ResourceTag/k8s.io/cluster-autoscaler/unicorn": "owned"
+                    "aws:ResourceTag/k8s.io/cluster-autoscaler/${CLUSTER}": "owned"
                 }
             }
         }
@@ -43,11 +44,18 @@ cat << EOF > cluster_autoscaler_policy.json
 }
 EOF
 
+# Create the IAM Policy first
+POLICY_ARN=$(aws iam create-policy \
+  --policy-name AmazonEKSClusterAutoscalerPolicy \
+  --policy-document file://cluster_autoscaler_policy.json \
+  --query 'Policy.Arn' \
+  --output text)
+
 eksctl create iamserviceaccount \
   --cluster=${CLUSTER} \
   --namespace=kube-system \
   --name=cluster-autoscaler \
-  --attach-policy-arn=arn:aws:iam::353615901360:policy/cluster-autoscaler-9f62bae2173af9928fe85f9701 \
+  --attach-policy-arn=${POLICY_ARN} \
   --override-existing-serviceaccounts \
   --approve \
   --region=us-east-1
@@ -61,6 +69,7 @@ helm upgrade --install cluster-autoscaler autoscaler/cluster-autoscaler \
   --set autoDiscovery.clusterName=${CLUSTER} \
   --set rbac.serviceAccount.create=false \
   --set rbac.serviceAccount.name=cluster-autoscaler \
+  --set image.tag=${AUTOSCALER_IMAGE_TAG} \
   --set extraArgs.balance-similar-node-groups=true \
   --set extraArgs.skip-nodes-with-local-storage=false \
   --set extraArgs.skip-nodes-with-system-pods=false \
