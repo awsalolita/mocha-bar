@@ -216,3 +216,8 @@ Because ECS containers in the same task share the `awsvpc` network namespace, yo
 ```bash
 curl "http://localhost:2772/applications/<application_name>/environments/<environment_name>/configurations/<configuration_name>"
 ```
+
+## Connect EFS in another vpc within ECS
+1. create route53 private hosted zone with the name of the efs domain name
+2. define A record with root `@` with the EFS ips
+3. attach route53 to the ECS cluster VPC
