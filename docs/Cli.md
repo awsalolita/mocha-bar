@@ -143,3 +143,65 @@ aws cloudwatch put-metric-alarm \
 ```bash
 aws events put-events --entries file://event.json
 ```
+
+
+```bash
+#!/bin/bash
+
+TARGET_REGION=""
+KMS_KEY_ARN=""
+
+# Loop through all buckets in the account
+for bucket in $(aws s3api list-buckets --query 'Buckets[*].Name' --output text); do
+  
+  # Determine the bucket's region
+  LOCATION=$(aws s3api get-bucket-location --bucket "$bucket" --query 'LocationConstraint' --output text)
+  
+  # AWS returns "None" for buckets in us-east-1, standardizing it here
+  if [ "$LOCATION" == "None" ]; then LOCATION="us-east-1"; fi
+  
+  # Only process buckets in the target region
+  if [ "$LOCATION" == "$TARGET_REGION" ]; then
+    echo "Processing $bucket in $LOCATION..."
+    
+    # 1. Apply Lifecycle Rule: Transition to Glacier after 90 days
+    aws s3api put-bucket-lifecycle-configuration \
+      --bucket "$bucket" \
+      --lifecycle-configuration '{
+        "Rules": [
+          {
+            "ID": "TransitionAllToGlacierAfter90Days",
+            "Filter": {
+              "Prefix": ""
+            },
+            "Status": "Enabled",
+            "Transitions": [
+              {
+                "Days": 90,
+                "StorageClass": "GLACIER"
+              }
+            ]
+          }
+        ]
+      }'
+      
+    # 2. Enable Default Encryption with Customer Managed Key (CMK)
+    # Note: BucketKeyEnabled=true reduces KMS costs by using S3 Bucket Keys
+    aws s3api put-bucket-encryption \
+      --bucket "$bucket" \
+      --server-side-encryption-configuration "{
+        \"Rules\": [
+          {
+            \"ApplyServerSideEncryptionByDefault\": {
+              \"SSEAlgorithm\": \"aws:kms\",
+              \"KMSMasterKeyID\": \"$KMS_KEY_ARN\"
+            },
+            \"BucketKeyEnabled\": true
+          }
+        ]
+      }"
+      
+    echo "Successfully updated $bucket."
+  fi
+done
+```
