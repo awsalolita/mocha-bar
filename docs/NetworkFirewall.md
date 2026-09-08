@@ -6,6 +6,7 @@
 * **AZ-B Subnets:** Private B (`10.0.2.0/24`), Public B (`10.0.4.0/24`), Firewall B (`10.0.6.0/24`)
 
 ### 1. IGW Edge Route Table (Ingress)
+## TO THE PUBLIC SUBNET
 **Associated Resource:** Internet Gateway (`igw-id`) via Edge Association.
 **Description:** Intercepts return traffic from the internet destined for the NAT Gateways and forces it symmetrically through the respective AZ's Firewall Endpoint.
 
