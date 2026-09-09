@@ -1,0 +1,30 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-custom-label
+  annotations:
+    policies.kyverno.io/title: Disallow Custom Label
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod, Label
+    policies.kyverno.io/description: >-
+      Pods containing specified custom or prohibited labels are blocked from running.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: check-no-custom-label
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "The custom label '<CUSTOM_LABEL>' is not allowed on Pods."
+      deny:
+        conditions:
+          any:
+          - key: "<CUSTOM_LABEL>"
+            operator: AnyIn
+            value: "{{ request.object.metadata.labels.keys(@) || `[]` }}"

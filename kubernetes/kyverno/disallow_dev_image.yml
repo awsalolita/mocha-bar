@@ -1,0 +1,35 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-dev-image
+  annotations:
+    policies.kyverno.io/title: Disallow Dev Images
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Development images (such as image names or tags starting with 'dev-*')
+      must not be allowed to run.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: validate-no-dev-images
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Images matching 'dev-*' (or tags ':dev-*') are not permitted."
+      foreach:
+        - list: "request.object.spec.containers"
+          pattern:
+            image: "!*dev-*"
+        - list: "request.object.spec.initContainers"
+          pattern:
+            image: "!*dev-*"
+        - list: "request.object.spec.ephemeralContainers"
+          pattern:
+            image: "!*dev-*"
