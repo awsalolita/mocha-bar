@@ -1,18 +1,3 @@
-"""SQLAlchemy copy-paste reference for contests / gamedays.
-
-Style: reflect an EXISTING database with automap (no models to write by hand),
-then copy the section you need. Every scenario below is self-contained.
-
-Sections
-    1. Engine (mysql / postgres)
-    2. Reflect tables (automap)
-    3. JSON serialization of a reflected row
-    4. CRUD (insert / select one / select many / update / delete)
-    5. Dynamic column update by name  (update a field you only know at runtime)
-    6. Dynamic insert with **kwargs
-    7. Filter by field / join
-"""
-
 import json
 import logging
 
@@ -25,14 +10,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 
-# =============================================================================
-# 1. ENGINE
-# =============================================================================
-# mysql   ->  pip install mysql-connector-python
-# postgres->  pip install psycopg2-binary
-#
-# pool_pre_ping=True  : drop dead connections instead of erroring mid-request.
-# future=True         : SQLAlchemy 2.0 style API.
 
 def create_engine_mysql(user, password, host, database, port=3306):
     url = f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}"
@@ -53,28 +30,11 @@ engine = create_engine_mysql(
 )
 
 
-# =============================================================================
-# 2. REFLECT TABLES (automap)
-# =============================================================================
-# automap reads the live schema and builds ORM classes for you.
-# Table names become attributes on Base.classes.<table_name>.
-# Requires a primary key on each table you want mapped.
-
 Base = automap_base()
 Base.prepare(autoload_with=engine)
 
-# Grab the mapped classes you need (names = actual table names).
 enterprise_table = Base.classes.enterprise
 
-# See what got mapped if you're unsure of the table names:
-#   print(list(Base.classes.keys()))
-
-
-# =============================================================================
-# 3. JSON SERIALIZATION OF A REFLECTED ROW
-# =============================================================================
-# A reflected row is an ORM object, not JSON-serializable on its own.
-# Two ways: a to_dict() helper (preferred) or a json.JSONEncoder.
 
 def row_to_dict(row):
     """Turn one reflected ORM row into a plain dict of its columns."""
@@ -99,13 +59,6 @@ class AlchemyEncoder(json.JSONEncoder):
             return fields
         return super().default(obj)
 
-
-# =============================================================================
-# 4. CRUD
-# =============================================================================
-# session.begin() opens a transaction and auto-commits on success /
-# auto-rolls-back on exception. session.flush() sends SQL now (so you can read
-# an auto-generated id) without committing yet.
 
 def crud_examples():
     with Session(engine) as session, session.begin():
