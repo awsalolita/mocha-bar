@@ -20,9 +20,19 @@ spec:
         app:  <APP>
     spec:
       serviceAccountName: <SA NAME>
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
       - name:  <APP>
         image:  <IMAGE>
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
         lifecycle:
           preStop:
             exec:
