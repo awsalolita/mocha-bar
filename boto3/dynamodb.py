@@ -172,3 +172,20 @@ def ddbr_scan_all(resource, table):
             break
         kwargs["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
     return items
+
+
+# ============================================================
+# ----------------- DAX ACCELERATOR HOOK ---------------------
+# ============================================================
+
+def get_dax_resource(endpoint_url, region=None):
+    """
+    Returns an amazondax Table Resource pointing to a DAX cluster discovery endpoint.
+    Drop-in replacement for get_resource() — all ddbr_* functions work identically!
+    See boto3/dax.py and docs/DAX.md for cluster provisioning and details.
+    """
+    import amazondax
+    kwargs = {"endpoint_url": endpoint_url}
+    if region:
+        kwargs["region_name"] = region
+    return amazondax.AmazonDaxClient.resource(**kwargs)
