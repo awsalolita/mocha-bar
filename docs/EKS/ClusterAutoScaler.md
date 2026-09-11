@@ -1,5 +1,10 @@
-##################### SET RESOURCES FOR PODS #####################
+# Cluster Autoscaler
 
+## 1. Environment Variables & Auto Scaling Group Tags
+
+Tag the Auto Scaling Group so that the Cluster Autoscaler can auto-discover it:
+
+```bash
 CLUSTER=unicorn
 ASG=eks-app-ng-2ed0391f-fc4b-66f1-6b87-19d93cfc3d7a
 AUTOSCALER_IMAGE_TAG=v1.36.1 # Set this to match your EKS cluster version
@@ -7,8 +12,13 @@ AUTOSCALER_IMAGE_TAG=v1.36.1 # Set this to match your EKS cluster version
 aws autoscaling create-or-update-tags --tags \
   "ResourceId=$ASG,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=true,PropagateAtLaunch=true" \
   "ResourceId=$ASG,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/$CLUSTER,Value=owned,PropagateAtLaunch=true"
+```
 
-cat << EOF > cluster_autoscaler_policy.json
+## 2. Create IAM Policy
+
+Save the following IAM policy document to `cluster_autoscaler_policy.json`:
+
+```json
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -44,15 +54,23 @@ cat << EOF > cluster_autoscaler_policy.json
         }
     ]
 }
-EOF
+```
 
-# Create the IAM Policy first
+Create the IAM Policy in AWS IAM:
+
+```bash
 POLICY_ARN=$(aws iam create-policy \
   --policy-name AmazonEKSClusterAutoscalerPolicy \
   --policy-document file://cluster_autoscaler_policy.json \
   --query 'Policy.Arn' \
   --output text)
+```
 
+## 3. Create IAM Service Account
+
+Associate the IAM policy with a Kubernetes ServiceAccount using `eksctl`:
+
+```bash
 eksctl create iamserviceaccount \
   --cluster=${CLUSTER} \
   --namespace=kube-system \
@@ -61,9 +79,14 @@ eksctl create iamserviceaccount \
   --override-existing-serviceaccounts \
   --approve \
   --region=us-east-1
+```
 
+## 4. Deploy Cluster Autoscaler via Helm
+
+```bash
 helm repo add autoscaler https://kubernetes.github.io/autoscaler
 helm repo update
+
 helm upgrade --install cluster-autoscaler autoscaler/cluster-autoscaler \
   --namespace kube-system \
   --set cloudProvider=aws \
@@ -78,3 +101,4 @@ helm upgrade --install cluster-autoscaler autoscaler/cluster-autoscaler \
   --set extraArgs.scale-down-unneeded-time=5m \
   --set extraArgs.scale-down-delay-after-add=2m \
   --set extraArgs.scan-interval=10s
+```

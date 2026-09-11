@@ -1,28 +1,53 @@
+# KEDA (Kubernetes Event-driven Autoscaling)
+
+## 1. Install KEDA via Helm
+
+```bash
 helm repo add kedacore https://kedacore.github.io/charts
+helm repo update kedacore
 helm install keda kedacore/keda -n keda --create-namespace
+```
 
+## 2. Create CloudWatch IAM Policy
 
-# Create this policy for keda
+Create an IAM policy that allows KEDA to query CloudWatch metrics:
+
+```json
 {
-  "Effect": "Allow",
-  "Action": [
-    "cloudwatch:GetMetricData",
-    "cloudwatch:GetMetricStatistics",
-    "cloudwatch:ListMetrics"
-  ],
-  "Resource": "*"
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:GetMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics"
+      ],
+      "Resource": "*"
+    }
+  ]
 }
+```
 
-### attach policy to the keda sa
+## 3. Attach Policy to KEDA Service Account
+
+Associate the IAM policy with the KEDA operator service account:
+
+```bash
 eksctl create iamserviceaccount \
   --cluster unicorn-cluster \
   --namespace keda \
   --name keda-operator \
-  --attach-policy-arn arn:aws:iam::298367968222:policy/keda_cloudwatch \
+  --attach-policy-arn arn:aws:iam::<AWS_ACCOUNT_ID>:policy/keda_cloudwatch \
   --override-existing-serviceaccounts \
   --approve
+```
 
-### KEDA deploy in app namespace
+## 4. Deploy TriggerAuthentication and ScaledObject
+
+Apply the KEDA `TriggerAuthentication` and `ScaledObject` in your application namespace (e.g. `my-app` scaling on an SQS queue):
+
+```yaml
 apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
@@ -42,8 +67,8 @@ spec:
     name: my-app          # Deployment name
   minReplicaCount: 2
   maxReplicaCount: 20
-  pollingInterval: 30     # how often KEDA queries CloudWatch
-  cooldownPeriod: 300     # wait before scale-in
+  pollingInterval: 30     # How often KEDA queries CloudWatch (seconds)
+  cooldownPeriod: 300     # Wait before scale-in (seconds)
   triggers:
     - type: aws-cloudwatch
       authenticationRef:
@@ -59,3 +84,4 @@ spec:
         metricCollectionTime: "300"
         metricUnit: Count
         identityOwner: operator
+```

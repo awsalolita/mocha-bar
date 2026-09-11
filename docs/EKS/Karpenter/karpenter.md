@@ -1,18 +1,31 @@
+# Karpenter Installation and Configuration
+
+## 1. Environment Variables & Setup
+
+Set the required environment variables:
+
+```bash
 export CLUSTER_NAME=unicorn-cluster
 export AWS_REGION=us-east-1
 export AWS_PARTITION=aws
 export KARPENTER_NAMESPACE=kube-system
 export KARPENTER_VERSION=1.14.0
 export AWS_ACCOUNT_ID=298367968222
+
 export OIDC_ENDPOINT=$(aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query "cluster.identity.oidc.issuer" --output text)
 export CLUSTER_ENDPOINT=$(aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query "cluster.endpoint" --output text)
+
 aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION"
-kubectl get nodes   # must work before continuing
+kubectl get nodes   # Verify connection before continuing
+```
 
+## 2. Karpenter Node IAM Role
 
-## Node iam role
+Create the trust policy and IAM role for the Karpenter-provisioned worker nodes:
+
+```bash
 cat > node-trust-policy.json <<'EOF'
 {
   "Version": "2012-10-17",
@@ -23,9 +36,11 @@ cat > node-trust-policy.json <<'EOF'
   }]
 }
 EOF
+
 aws iam create-role \
   --role-name "KarpenterNodeRole-${CLUSTER_NAME}" \
   --assume-role-policy-document file://node-trust-policy.json
+
 aws iam attach-role-policy --role-name "KarpenterNodeRole-${CLUSTER_NAME}" \
   --policy-arn "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
 aws iam attach-role-policy --role-name "KarpenterNodeRole-${CLUSTER_NAME}" \
@@ -34,8 +49,13 @@ aws iam attach-role-policy --role-name "KarpenterNodeRole-${CLUSTER_NAME}" \
   --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
 aws iam attach-role-policy --role-name "KarpenterNodeRole-${CLUSTER_NAME}" \
   --policy-arn "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+```
 
-## Create controller policy
+## 3. Karpenter Controller IAM Role & Policy
+
+Create the trust policy for the Karpenter Controller (using IRSA):
+
+```bash
 cat > controller-trust-policy.json <<EOF
 {
   "Version": "2012-10-17",
@@ -58,9 +78,11 @@ EOF
 aws iam create-role \
   --role-name "KarpenterControllerRole-${CLUSTER_NAME}" \
   --assume-role-policy-document file://controller-trust-policy.json
+```
 
+Create the Karpenter controller policy:
 
-### Create the controllet-policy json file
+```bash
 cat << EOF > controller-policy.json
 {
     "Statement": [
@@ -185,21 +207,32 @@ EOF
 aws iam put-role-policy --role-name "KarpenterControllerRole-${CLUSTER_NAME}" \
     --policy-name "KarpenterControllerPolicy-${CLUSTER_NAME}" \
     --policy-document file://controller-policy.json
+```
 
+## 4. Tag Subnets and Security Groups
 
-# Subnets (your private ones)
+Tag the subnets and cluster security group so Karpenter can discover them:
+
+```bash
+# Tag private subnets
 aws ec2 create-tags \
   --resources subnet-0e8aeab9ae39bbb54 subnet-07668594acb45a1cb \
   --tags Key=karpenter.sh/discovery,Value=${CLUSTER_NAME}
 
-# Cluster security group
+# Tag cluster security group
 SG=$(aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query "cluster.resourcesVpcConfig.clusterSecurityGroupId" --output text)
+
 aws ec2 create-tags \
   --resources "$SG" \
   --tags Key=karpenter.sh/discovery,Value=${CLUSTER_NAME}
+```
 
-## Let karpenter nodes join the cluster
+## 5. Enable Karpenter Nodes to Join the Cluster
+
+Add an IAM identity mapping so Karpenter nodes can authenticate to the cluster:
+
+```bash
 eksctl create iamidentitymapping \
   --cluster "$CLUSTER_NAME" \
   --region "$AWS_REGION" \
@@ -207,8 +240,11 @@ eksctl create iamidentitymapping \
   --username "system:node:{{EC2PrivateDNSName}}" \
   --group system:bootstrappers \
   --group system:nodes
+```
 
+## 6. Install Karpenter via Helm
 
+```bash
 helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
   --version "${KARPENTER_VERSION}" \
   --namespace "${KARPENTER_NAMESPACE}" \
@@ -221,8 +257,56 @@ helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
   --set controller.resources.requests.cpu=100m \
   --set controller.resources.requests.memory=256Mi \
   --wait
+```
 
+## 7. EC2NodeClass and NodePool Configuration
 
+Apply the Karpenter `EC2NodeClass` and `NodePool` resources:
+
+```yaml
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  role: KarpenterNodeRole-unicorn-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: unicorn-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: unicorn-cluster
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+      requirements:
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values: ["on-demand"]
+        - key: "node.kubernetes.io/instance-type"
+          operator: In
+          values: ["t3.medium"]
+  limits:
+    cpu: "100"
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m
+```
+
+Apply directly via kubectl:
+
+```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
@@ -263,8 +347,13 @@ spec:
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 1m
 EOF
+```
 
-## Test
+## 8. Test Autoscaling with Inflate Deployment
+
+Deploy a pause container workload to trigger node scaling:
+
+```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -288,4 +377,6 @@ spec:
             requests:
               cpu: 1
 EOF
+
 kubectl scale deployment inflate --replicas=5
+```
