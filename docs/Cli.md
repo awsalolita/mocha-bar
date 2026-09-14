@@ -13,7 +13,7 @@ for group in $(aws logs describe-log-groups --query 'logGroups[*].logGroupName' 
 done
 ```
 
-## Put alarm cloudwatch
+## EC2 CPU Utilization
 ```bash
 aws cloudwatch put-metric-alarm \
   --alarm-name "HighCPU-Alert" \
@@ -125,6 +125,61 @@ aws cloudwatch put-metric-alarm \
   --alarm-actions "arn:aws:sns:us-east-1:111122223333:YourSNSTopicName"
 ```
 
+## AWS Lambda: High Error Rate
+```bash
+aws cloudwatch put-metric-alarm \
+  --alarm-name "Lambda-High-Errors-Alert" \
+  --alarm-description "Triggers if Lambda errors exceed 5 in a 5-minute period" \
+  --metric-name Errors \
+  --namespace AWS/Lambda \
+  --statistic Sum \
+  --period 300 \
+  --threshold 5 \
+  --comparison-operator GreaterThanThreshold \
+  --dimensions Name=FunctionName,Value=YOUR_FUNCTION_NAME \
+  --evaluation-periods 1 \
+  --alarm-actions YOUR_SNS_TOPIC_ARN
+```
+
+## VPC Flow Logs: High Rejected Traffic
+```bash
+aws logs put-metric-filter \
+  --log-group-name "YOUR_VPC_FLOW_LOG_GROUP" \
+  --filter-name "RejectedTrafficFilter" \
+  --filter-pattern '[version, account, eni, source, dest, srcport, destport, protocol, packets, bytes, start, end, action="REJECT", log_status]' \
+  --metric-transformations metricName=RejectedConnections,metricNamespace=Custom/VPCFlowLogs,metricValue=1
+
+aws cloudwatch put-metric-alarm \
+  --alarm-name "VPC-High-Rejected-Traffic" \
+  --alarm-description "Triggers when rejected connections exceed 100 in 5 minutes (potential scan/DDoS)" \
+  --metric-name RejectedConnections \
+  --namespace Custom/VPCFlowLogs \
+  --statistic Sum \
+  --period 300 \
+  --threshold 100 \
+  --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 1 \
+  --treat-missing-data notBreaching \
+  --alarm-actions YOUR_SNS_TOPIC_ARN
+```
+
+## Amazon RDS: Low Free Storage Space
+
+```bash
+aws cloudwatch put-metric-alarm \
+  --alarm-name "RDS-Low-Storage-Space" \
+  --alarm-description "Triggers when RDS free storage drops below 5GB" \
+  --metric-name FreeStorageSpace \
+  --namespace AWS/RDS \
+  --statistic Average \
+  --period 300 \
+  --threshold 5368709120 \
+  --comparison-operator LessThanThreshold \
+  --dimensions Name=DBInstanceIdentifier,Value=YOUR_DB_INSTANCE_NAME \
+  --evaluation-periods 1 \
+  --alarm-actions YOUR_SNS_TOPIC_ARN
+```
+
 ## EventBridge put event
 
 ```json
@@ -204,4 +259,27 @@ for bucket in $(aws s3api list-buckets --query 'Buckets[*].Name' --output text);
     echo "Successfully updated $bucket."
   fi
 done
+```
+
+
+## Create VPC Flow Log
+```bash
+# 1. Create the S3 Flow Log (for storage and analytics)
+aws ec2 create-flow-logs \
+  --resource-type VPC \
+  --resource-ids vpc-YOUR_VPC_ID \
+  --traffic-type ALL \
+  --log-destination-type s3 \
+  --log-destination arn:aws:s3:::YOUR_BUCKET_NAME \ 
+  --destination-options "FileFormat=parquet,HiveCompatiblePartitions=true,PerHourPartition=true"
+
+# 2. Create the CloudWatch Flow Log (for the metric alarm we built earlier)
+aws ec2 create-flow-logs \
+  --resource-type VPC \
+  --resource-ids vpc-YOUR_VPC_ID \
+  --traffic-type REJECT \
+  --log-destination-type cloud-watch-logs \
+  --log-group-name YOUR_VPC_FLOW_LOG_GROUP \
+  --deliver-logs-permission-arn YOUR_IAM_ROLE_ARN \
+  --destination-options "FileFormat=parquet,HiveCompatiblePartitions=true,PerHourPartition=true"
 ```
